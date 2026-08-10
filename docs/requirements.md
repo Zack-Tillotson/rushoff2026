@@ -27,12 +27,13 @@ Kids do the physical finding; parents do the scanning/tapping.
    picks a specific word from that blank's pool to add to the family's story.
 5. A family's story fills in over the course of the race as more clues are found —
    partial blanks show a placeholder until found.
-6. At the finish line, families read (or better yet, yell) their completed story aloud —
-   the final line is a literal shouted catchphrase — then carry one hobby-horse per word
-   they learned for the final stretch. More words learned means more to juggle.
+6. At the finish line, a family scans a **finish QR code** that seals/completes their
+   story and reveals it as one big final moment — ending in the shouted catchphrase —
+   which is the "command" to carry one hobby-horse per word learned and gallop the
+   final stretch. More words learned means more to juggle.
 7. Throughout, the organizer can monitor and control the event live via an **admin
-   view**, which also renders every station's QR code for testing on the organizer's own
-   phone.
+   view**, which also renders every route's QR code (start, all 7 stations, and finish)
+   for testing on the organizer's own phone.
 
 ## Technical Architecture
 - **Hosting**: Firebase Hosting serves the web app. Mobile web only — no app install;
@@ -44,14 +45,14 @@ Kids do the physical finding; parents do the scanning/tapping.
   - so every family's phone and the admin view stay live-synced with the same shared
     state, with no page refresh needed (this is what makes a *shared* race clock and
     live admin monitoring possible).
-- **Map**: a real map (Leaflet + OpenStreetMap, no API key/billing needed) shows the
-  actual course with a marker per main station and an approximate-area circle per bonus
-  station, plus the family's own live position via the browser's Geolocation API. This
-  replaces iteration 1's placeholder static-image-with-percentage-pins approach.
+- **Map**: back to a static course-image placeholder (no live map/GPS) — you'll supply
+  the real map image directly; the dynamic Leaflet/GPS approach from earlier in
+  iteration 2 is dropped entirely (simpler, and removes the location-permission and
+  screen-staring concerns raised in review).
 - **Admin QR testing**: the admin view renders actual scannable QR codes for the start
-  URL and all 7 station URLs, generated client-side — so the organizer can test (or let
-  someone else scan) every step from their own phone without needing the printed
-  physical clues on hand.
+  URL, all 7 station URLs, and the finish URL, generated client-side — so the organizer
+  can test (or let someone else scan) every step from their own phone without needing
+  the printed physical clues on hand.
 - **Session identity**: a family's data lives server-side in the Realtime Database,
   keyed by that device's Firebase Anonymous Auth id, which Firebase itself persists in
   the browser — so closing the tab or restarting the phone doesn't lose anything, as
@@ -102,33 +103,34 @@ Kids do the physical finding; parents do the scanning/tapping.
   is enough; no need for a heavyweight leaderboard system.
 
 ### Map & wayfinding (hint mechanism)
-- A **real map** of the actual course (Leaflet + OpenStreetMap) shows markers for the 5
-  main station locations, replacing iteration 1's placeholder static-image approach.
-- The 2 bonus stations show only a general **area circle** on the map (not an exact
-  marker) — this is the "hint": enough to guide a determined family without giving away
-  the exact spot.
-- The map also shows the family's own **live location** (browser Geolocation API), so
-  they can see how close they are to a station relative to where they're standing —
-  requires the browser's location permission prompt and a live network connection to
-  load map tiles.
+- A **static course-image placeholder** for now — you'll supply the real map image
+  directly (no dynamic map library, no GPS, no live location). Icons for the 5 main
+  stations are positioned on the image; the 2 bonus stations show only a general
+  **area** (not an exact icon) — this is the "hint": enough to guide a determined
+  family without giving away the exact spot.
 - This map view serves as the hint mechanism; no separate stuck-detection/timer-based hint
   trigger is needed on top of it.
-- Real GPS coordinates for every station location are required for this to work — the
-  course walk in the Pre-Race Checklist now needs to capture actual lat/lng, not just
-  verify cell signal.
+- No GPS coordinates needed for stations — placement is just positioning icons on
+  whatever image you supply, same lightweight approach as the original iteration-2 plan
+  before the (now-dropped) real-map detour.
 
-### Finish-line challenge
-- On arrival, a family reads their completed (or partial) story aloud — ideally yelled,
-  especially the final `CATCHPHRASE` line — as the "command" that starts their gallop.
-- A single prop type — hobby-horses/stick-ponies — staged at the finish. A family
-  carries **one hobby-horse per word they learned** for the final stretch — more learned
-  = more to juggle. Families who found fewer stations have a lighter (easier) carry;
-  nobody is excluded from the bit.
+### Finish-line reveal & challenge
+- A **finish QR code**, posted at the finish, is the trigger for the big moment: scanning
+  it seals/completes the family's story and shows it as one dramatic final reveal —
+  ending in the shouted catchphrase — rather than families deciding for themselves when
+  to read/yell it. This gives the moment a clear, unambiguous start (resolves the
+  "when exactly do we read vs. yell it" ambiguity raised in review).
+- Right after that reveal, a single prop type — hobby-horses/stick-ponies — staged at
+  the finish. A family carries **one hobby-horse per word they learned** for the final
+  stretch — more learned = more to juggle. Families who found fewer stations have a
+  lighter (easier) carry; nobody is excluded from the bit.
 - This is simpler to staff than a per-type-item design would be: a volunteer just counts
   and hands out the same prop type, no matching different items to different catches
   (this resolves the "finish-line staffing" risk flagged in the last iteration).
 - Logistics: need enough hobby-horses on hand (up to 7 per family, worst case) before
-  race day.
+  race day, plus a physical finish QR code posted at the finish — placement needs to
+  not interfere with the actual race's real finish-line flow/congestion (see Pre-Race
+  Checklist).
 
 ### Race clock
 - A single shared elapsed-time clock, backed by the Realtime Database, shown to everyone
@@ -147,8 +149,8 @@ Kids do the physical finding; parents do the scanning/tapping.
   - **Manually add/correct a catch** for a family — this is the fallback for a destroyed
     clue, a QR that won't scan, or a dispute, so a single physical/technical hiccup
     doesn't require rebuilding anything mid-event.
-  - **QR codes for every route** (start + all 7 stations), rendered directly in the
-    admin view so the organizer can test the whole flow — or hand their phone to
+  - **QR codes for every route** (start + all 7 stations + finish), rendered directly in
+    the admin view so the organizer can test the whole flow — or hand their phone to
     someone else to scan — without needing the printed physical clues on hand. Useful
     both before race day (dry runs) and during the event (fixing a station on the fly).
 - This is the organizer's single control point during the event, carried on the
@@ -170,11 +172,9 @@ Kids do the physical finding; parents do the scanning/tapping.
 
 ## Out of Scope
 - Photo upload/sharing site (dropped).
-- Race timing/results via GPS, or replacing any existing race-day tooling — there is no
-  external race-day tech to integrate with, and the race clock here is just for
-  in-app tension, not official timing. (This is distinct from the map now showing a
-  family's own live position to themselves, client-side only — that's in scope; nothing
-  tracks or stores anyone's location, or shows one family's location to another.)
+- GPS/location of any kind — dropped entirely along with the dynamic map. No live
+  position, no race timing/results via GPS, no replacing any existing race-day tooling.
+  The race clock here is just for in-app tension, not official timing.
 - Stuck-detection or explicit "give me a hint" interaction — the map covers this.
 - Typing a team name as the *trigger* to start (the start QR scan is the trigger; name
   entry happens right after, as onboarding, not as the identification mechanic itself).
@@ -188,13 +188,16 @@ Kids do the physical finding; parents do the scanning/tapping.
   fixing, not a security boundary.
 
 ## Pre-Race Checklist
-- Walk the course and: (1) verify cell signal at every planned main and bonus station
-  location, (2) capture real GPS coordinates (lat/lng) for each — both are now required
-  for the map to work, not just a nice-to-have.
-- Do a full end-to-end dry run (start scan → catch at each station → finish) on at least
-  one iPhone and one Android device before race day, using the admin view's QR codes to
-  test without needing to physically visit the course.
-- Confirm laminated/weatherproofed clue cards and a way to stake/secure them against wind.
+- Walk the course and verify cell signal at every planned main and bonus station
+  location (no GPS coordinates needed — map placement is just icon positioning on
+  whatever static image is supplied).
+- Do a full end-to-end dry run (start scan → catch at each station → finish scan) on at
+  least one iPhone and one Android device before race day, using the admin view's QR
+  codes to test without needing to physically visit the course.
+- Confirm laminated/weatherproofed clue cards (including the finish QR) and a way to
+  stake/secure them against wind.
+- Decide exactly where the finish QR gets posted — needs to not interfere with the
+  actual race's real finish-line flow/congestion.
 - Confirm enough hobby-horses/stick-ponies are on hand at the finish (worst case: 7 per
   family), and brief whoever is staffing it — counting and handing out one prop type is
   simple, but still needs someone assigned.
@@ -214,8 +217,9 @@ These came out of an event-planner + technical review and are not yet resolved:
   too (sticker, stamped card) on top of that.
 - **Day-of fallback for a broken station**: the admin view's manual-catch-correction
   covers the *digital* side of a failure (QR won't scan, clue destroyed), but there's no
-  decided physical fallback (e.g., a backup clue card) if the primary is lost outright.
-- **GPS accuracy in the field**: phone GPS can be slow to lock or a bit inaccurate,
-  especially right at the start of a session. The map/hint experience should degrade
-  gracefully (show markers even before the user's own location resolves) rather than
-  blocking on it.
+  decided physical fallback (e.g., a backup clue card) if the primary is lost outright —
+  this now also applies to the finish QR specifically, since that one's a single point
+  of failure for the whole finale moment.
+- ~~**GPS accuracy in the field**~~ — moot now that the dynamic map/GPS is dropped.
+- ~~**Ambiguity in when to read vs. yell the story**~~ — resolved by the finish QR: the
+  scan itself is the trigger, not a self-directed decision.
