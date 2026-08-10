@@ -18,6 +18,11 @@ shared state.
   `CssBaseline` at the root layout, a small custom theme (see Theming below).
 - **Firebase**: Hosting (static files) + Realtime Database (shared state) + Anonymous
   Auth, used purely as a convenient per-device unique id (see Security below).
+- **Leaflet + react-leaflet** for the real course map (OpenStreetMap tiles — no API key
+  or billing account needed), plus the browser's native **Geolocation API** for the
+  family's own live position. See Map & Geolocation below.
+- **`qrcode.react`** to render actual scannable QR codes client-side in the admin view
+  (start URL + all 7 station URLs) — no external QR-generation service needed anymore.
 - **State/data access**: no Redux/Zustand needed at this scale — a handful of small
   custom hooks wrapping Firebase's `onValue` listeners. No React Context needed either;
   the Firebase Auth SDK itself is the source of truth for "who am I on this device."
@@ -39,15 +44,16 @@ shared state.
     createdAt: <server timestamp>
     catches:
       /{stationId}
-        pokemonId: string
+        wordId: string
         caughtAt: <server timestamp>
         manual: boolean   # true if added via admin manual-correction
 ```
 
-Everything else — the list of stations (id, type, name, isBonus, map coordinates/area),
-the ~10-Pokemon pool per type, and the generic avatar set — is **static config shipped
-with the app** (TypeScript/JSON under `src/data/`), not stored in the database. It never
-changes at runtime, so there's no reason to pay for a DB round-trip to read it.
+Everything else — the list of stations (id, blank type, name, isBonus, real lat/lng
+coordinates or area radius), the ~10-word pool per blank type, the story template, and
+the generic avatar set — is **static config shipped with the app** (TypeScript/JSON
+under `src/data/`), not stored in the database. It never changes at runtime, so there's
+no reason to pay for a DB round-trip to read it.
 
 `familyId` **is the Firebase Anonymous Auth UID**, not a separately-generated key. Every
 device signs in anonymously on first load (`signInAnonymously()`); Firebase persists that
@@ -60,11 +66,11 @@ creates the record at that uid. A brand-new anonymous uid (e.g. a truly differen
 has no path back to an old family's data — that's an accepted limitation given the event
 is same-day/same-device in practice, not a cross-device account system.
 
-## Pokemon Data Source
-The `sprites` and `pokemon.json` repos already cloned locally under `~/Documents/programming`
-are a ready-made offline source for names/sprite images/types — no need to hit a live API
-(PokeAPI) at runtime or build time. Pull the ~70 Pokemon needed (10 per type × 7 types)
-from those into `src/data/pokemon.ts` once, bundled as static assets.
+## Word Data Source
+No external asset source needed anymore (unlike iteration 1's Pokemon sprites, or the
+horse-art problem the first draft of this theme would have created) — the ad-lib story
+and word pools are plain text, transcribed directly from `docs/adlib-words.md` into
+`src/data/adlib.ts`. Nothing to source, generate, or license.
 
 ## Pages / Routes (App Router)
 
@@ -72,11 +78,11 @@ from those into `src/data/pokemon.ts` once, bundled as static assets.
 |---|---|
 | `/` | Home: shared race clock (read-only), status of your own family, nav into the rest |
 | `/start` | Start QR lands here. Signs in anonymously if not already, then checks `/families/{uid}`: if it exists, redirect straight to `/`; if not, show the name+avatar form and create the record at that uid. |
-| `/station/[stationId]` | Clue QR lands here. `stationId` is one of the 7 known ids, pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. If this station is already caught by this family, show the existing catch (idempotent — re-scanning never re-rolls). Otherwise: random pick from the station's type pool, write to DB, play the reveal animation. |
-| `/collection` | This family's own caught Pokemon, by type, with a completion indicator. Doubles as the "proof" screen to show a finish-line volunteer which themed items to hand over. |
-| `/map` | Map with pins for the 5 main stations and fuzzy area circles for the 2 bonus stations. |
-| `/compare` | Shared view of all families and what they've caught — full-set completion, bonus catches, cross-family duplicates. |
-| `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + catch, manual add/correct-a-catch. |
+| `/station/[stationId]` | Clue QR lands here. `stationId` is one of the 7 known blank-type ids (`adjective`, `pluralnoun`, `verb`, `sound`, `number`, `title`, `catchphrase`), pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. If this station is already found by this family, show the existing word (idempotent — re-scanning never re-rolls). Otherwise: random pick from the blank's word pool, write to DB, play the reveal animation. |
+| `/collection` | This family's completed (or partial) ad-lib story, with unfilled blanks shown as placeholders. Doubles as the "proof" screen to show a finish-line volunteer how many hobby-horses to hand over, and as the "read/yell this aloud" screen for the finish moment. |
+| `/map` | Real Leaflet/OpenStreetMap view with markers for the 5 main stations, area circles for the 2 bonus stations, and the family's own live position via Geolocation. |
+| `/compare` | Shared view of all families and what they've found — full-story completion, bonus finds, cross-family duplicates. |
+| `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + word found, manual add/correct-a-catch, and rendered QR codes for the start URL + all 7 stations. |
 
 Mobile-first layout with an MUI `BottomNavigation` (Home / Map / Collection / Compare) for
 family-facing pages; `/admin` is a separate, unlinked layout not reachable from that nav.
@@ -93,6 +99,37 @@ Small hooks wrapping Firebase's `onValue`:
 
 All plain hooks — no global store, and no custom family-identity context needed since
 the Firebase Auth SDK itself is the source of truth for "who am I on this device."
+
+## Map & Geolocation
+- **Leaflet + react-leaflet**, tiles from OpenStreetMap's public tile server — free, no
+  API key or billing account, sufficient for a single small event's traffic.
+- Each main station's real lat/lng (captured during the course walk, see
+  `requirements.md` Pre-Race Checklist) renders as a marker; each bonus station's
+  approximate area renders as a translucent `Circle` with a radius in meters, not an
+  exact marker — same hint-not-answer design as iteration 1, just with real geography
+  instead of percentage-of-an-image positioning.
+- The family's own position comes from `navigator.geolocation.watchPosition()`,
+  rendered as a separate marker that updates live. Requires the browser's location
+  permission prompt — **degrade gracefully**: render the station markers immediately,
+  and add the "you are here" marker only once/if location resolves. Don't block the map
+  on permission being granted (per the GPS-accuracy risk noted in requirements.md).
+- **Known gotcha (same class of bug we hit twice already with the MUI theme and
+  Firebase `getDatabase()`)**: Leaflet touches `window`/`document` at module-load time,
+  and Next's static export still evaluates client components once in Node to produce
+  the initial HTML — so a plain top-level `import 'leaflet'` **will crash the build**
+  exactly like the earlier issues did. Fix: load the map component via
+  `next/dynamic(() => import('./LeafletMap'), { ssr: false })`, so it only ever
+  evaluates in the browser.
+
+## Admin QR Codes
+- `qrcode.react`'s `<QRCode value={url} />` renders real, scannable QR codes directly in
+  `/admin` — one for `/start` and one per station (8 total), each pointing at the actual
+  deployed URL (`window.location.origin` + path).
+- Doubles as the source for the physical printed clues too — screenshot or print
+  straight from this admin view instead of using an external QR-generator site,
+  replacing iteration 1's "generate by hand on a free online tool" plan.
+- Purely client-side rendering (SVG/canvas), no network dependency beyond the page
+  itself already having loaded — works even if tested offline once the page is cached.
 
 ## Security
 Given the scale (~8 groups, private family event, one afternoon) and the Friday deadline,
@@ -122,19 +159,13 @@ tampering:
 ## Theming (MUI)
 - Base theme with light/dark support optional (outdoor daytime use — bias toward high
   contrast, legible in direct sunlight; avoid pure white backgrounds that wash out).
-- Per-type accent colors (Fire=red/orange, Water=blue, Electric=yellow, Grass=green,
-  Bug=lime/yellow-green, Dragon=purple, Ghost=indigo) used for `Chip`/`Card` accents on
-  collection and compare views, not full theme repaints.
-- Key MUI components: `AppBar`, `BottomNavigation`, `Card`/`CardMedia` (Pokemon reveal),
-  `Dialog` (catch reveal flow), `Avatar` (family avatar), `LinearProgress` (set
-  completion), `Table`/`DataGrid`-lite (admin + compare), `Snackbar` (toasts, e.g. "catch
-  saved").
-
-## QR Code Generation
-Not part of the codebase. Once the app is deployed, generate the 7 needed QR codes
-(`/start`, `/station/fire`, `/station/water`, … `/station/ghost`) by hand using any free
-online QR generator, and print/laminate them directly. A one-time, 5-minute manual task
-doesn't need a script.
+- Per-blank-type accent colors (Adjective, PluralNoun, Verb, Sound, Number, Title,
+  Catchphrase each get a distinct color) used for `Chip`/`Card` accents on the story/
+  collection and compare views, not full theme repaints. Exact palette is a small,
+  low-stakes implementation choice — no need to nail it down here.
+- Key MUI components: `AppBar`, `BottomNavigation`, `Card` (word/story reveal), `Dialog`
+  (reveal flow), `Avatar` (family avatar), `LinearProgress` (story completion),
+  `Table`/`DataGrid`-lite (admin + compare), `Snackbar` (toasts, e.g. "word saved").
 
 ## Deployment
 - `next build` (with `output: 'export'` in `next.config`) produces a static `out/`
@@ -154,13 +185,18 @@ src/
     start/page.tsx
     station/[stationId]/page.tsx
     collection/page.tsx
-    map/page.tsx
+    map/
+      page.tsx                    # renders LeafletMap via next/dynamic({ ssr: false })
+      LeafletMap.tsx               # actual Leaflet/react-leaflet implementation
     compare/page.tsx
-    admin/page.tsx
+    admin/
+      page.tsx                    # passcode gate
+      AdminDashboard.tsx           # clock controls, live family table, manual correction
+      AdminQrCodes.tsx             # qrcode.react grid for start + 7 station URLs
     layout.tsx                    # MUI ThemeProvider, CssBaseline, BottomNavigation
   data/
-    stations.ts                   # 7 stations: id, type, name, isBonus, coords/area
-    pokemon.ts                    # ~10 Pokemon per type, sourced from local sprites/pokemon.json repos
+    stations.ts                   # 7 stations: id, blankType, name, isBonus, lat/lng or area radius (m)
+    adlib.ts                      # story template + ~10/~4 word pools per blank type
     avatars.ts                    # generic avatar set
   lib/
     firebase.ts                   # Firebase app/RTDB/Auth init
@@ -169,12 +205,14 @@ src/
       useRaceClock.ts
       useFamily.ts
       useAllFamilies.ts
-  theme.ts                        # MUI theme + per-type accent colors
+      useGeolocation.ts           # wraps navigator.geolocation.watchPosition
+  theme.ts                        # MUI theme + per-blank-type accent colors
 database.rules.json                 # optional, for version-controlling the open RTDB rules
 ```
 
-## Resolved (in favor of the fastest option, given the Friday deadline)
-- **Map**: a static image of the course with absolutely-positioned pins (main stations)
-  and circles (bonus-station areas). No map library, no interactivity needed for one
-  known, fixed course.
+## Resolved (in favor of the fastest option, given the timeline)
+- **Map**: real Leaflet + OpenStreetMap, with the family's own live GPS position — see
+  Map & Geolocation above (supersedes iteration 1's static-image placeholder).
 - **Reveal animation**: plain CSS/MUI transitions only. No animation library.
+- **QR codes**: rendered in-app via `qrcode.react` (admin view), not a manual external
+  tool — see Admin QR Codes above (supersedes iteration 1's "generate by hand" plan).

@@ -3,9 +3,9 @@
 ## Background
 The Rush Off 5k is an annual family fun run (mostly kids + siblings' families), themed
 around its own premise: horse thieves who jump on a horse and rush off. This site drives
-an in-course activity leaning into that — a QR-code clue hunt where each station is a
-horse you "steal"/saddle up (a **Round-Up** theme), capped off with a silly tiered
-challenge at the finish line.
+an in-course activity leaning into that — a QR-code hunt where each station teaches your
+family a **secret command word**, building toward a Mad-Libs-style outlaw story that
+your family yells aloud at the finish line to "start" their hobby-horse gallop.
 
 ## Timeline
 Race day is **Saturday, August 15** — about 5 days out from this doc. The full feature
@@ -23,13 +23,16 @@ Kids do the physical finding; parents do the scanning/tapping.
    flow that's already been tested by the time it matters).
 2. Paper clues (each with its own QR code) are hidden along the race course.
 3. Kids/families physically find a clue; a parent scans the QR code with their phone.
-4. Scanning reveals a "saddle up" screen for that station's horse **coat color/breed**,
-   then an animation/reveal picks a specific named horse of that category to add to the
-   family's herd.
-5. A family's herd grows over the course of the race as more clues are found.
-6. At the finish line, families carry one hobby-horse/stick-pony per horse they caught —
-   more caught means more to juggle for the final stretch.
-7. Throughout, the organizer can monitor and control the event live via an **admin view**.
+4. Scanning reveals a reveal screen for that station's **word blank**, then an animation
+   picks a specific word from that blank's pool to add to the family's story.
+5. A family's story fills in over the course of the race as more clues are found —
+   partial blanks show a placeholder until found.
+6. At the finish line, families read (or better yet, yell) their completed story aloud —
+   the final line is a literal shouted catchphrase — then carry one hobby-horse per word
+   they learned for the final stretch. More words learned means more to juggle.
+7. Throughout, the organizer can monitor and control the event live via an **admin
+   view**, which also renders every station's QR code for testing on the organizer's own
+   phone.
 
 ## Technical Architecture
 - **Hosting**: Firebase Hosting serves the web app. Mobile web only — no app install;
@@ -37,10 +40,18 @@ Kids do the physical finding; parents do the scanning/tapping.
   scanner. Must work on mainstream iOS Safari and Android Chrome.
 - **Data store**: Firebase **Realtime Database** as the single shared/central store for:
   - the race clock's state (start timestamp, running/stopped/reset),
-  - family records (name, avatar, and their caught horses per station),
+  - family records (name, avatar, and the word learned at each station),
   - so every family's phone and the admin view stay live-synced with the same shared
     state, with no page refresh needed (this is what makes a *shared* race clock and
     live admin monitoring possible).
+- **Map**: a real map (Leaflet + OpenStreetMap, no API key/billing needed) shows the
+  actual course with a marker per main station and an approximate-area circle per bonus
+  station, plus the family's own live position via the browser's Geolocation API. This
+  replaces iteration 1's placeholder static-image-with-percentage-pins approach.
+- **Admin QR testing**: the admin view renders actual scannable QR codes for the start
+  URL and all 7 station URLs, generated client-side — so the organizer can test (or let
+  someone else scan) every step from their own phone without needing the printed
+  physical clues on hand.
 - **Session identity**: a family's data lives server-side in the Realtime Database,
   keyed by that device's Firebase Anonymous Auth id, which Firebase itself persists in
   the browser — so closing the tab or restarting the phone doesn't lose anything, as
@@ -52,9 +63,9 @@ Kids do the physical finding; parents do the scanning/tapping.
   a single-use token. Every family that scans it independently gets their own catch
   recorded against their own family record. Multiple families can (and will) scan the
   same physical code over the course of the event.
-- **Catch randomization**: a family's catch at a station is an independent random pick
-  from that category's ~10-horse pool, with replacement *across* families — so two
-  different families can end up with the same specific named horse from the same
+- **Word randomization**: a family's pick at a station is an independent random draw
+  from that blank's ~10-word pool (~4 for bonus blanks), with replacement *across*
+  families — so two different families can end up with the same word from the same
   station. This is expected, and is part of what makes the comparison view interesting.
 - **Scale**: ~5 family groups + 3 older kids is a handful of records and a low write
   volume — Realtime Database comfortably covers this; no additional backend needed.
@@ -71,33 +82,49 @@ Kids do the physical finding; parents do the scanning/tapping.
   as part of this build). Custom per-family avatars are a follow-up, added later once
   supplied.
 
-### Clue stations & collection
-- **5 main stations** along the course, one per common horse coat color: Bay, Chestnut,
-  Black, Palomino, Pinto.
-- **2 bonus/hidden stations** for rarer, more exotic finds: Appaloosa + Mustang (wild/
-  untamed). These are optional/off-path finds, not required to complete the main set.
-- Each category has a pool of ~10 possible named horses. Scanning a station's QR code
-  shows a "saddle up" screen for that category, with some reveal UX (e.g. a lasso-toss
-  animation) before showing which specific named horse was caught.
-- Horse names/art are original — no licensed IP involved, so no restrictions on sharing
-  the site publicly if that ever comes up (unlike the previous Pokemon-themed iteration).
+### Clue stations & the story
+- **5 main stations** along the course, one per word-blank type: `ADJECTIVE`,
+  `PLURAL_NOUN`, `VERB`, `SOUND`, `NUMBER` — each a single silly word.
+- **2 bonus/hidden stations** for bigger, sillier finds: `TITLE` and `CATCHPHRASE` —
+  each a whole shouted phrase rather than a single word. These are optional/off-path
+  finds, not required to complete the main story. Coat-color categories from the first
+  draft of this theme are dropped entirely — see `docs/adlib-words.md`.
+- Each blank has a pool of ~10 possible words (~4 for the bonus blanks). Scanning a
+  station's QR code shows a reveal screen for that blank, with some reveal UX before
+  showing which specific word was picked.
+- All story text/words are original — no licensed IP involved, so no restrictions on
+  sharing the site publicly if that ever comes up.
+- The story itself (see `docs/adlib-words.md`) is a fixed Mad-Libs template — filled-in
+  blanks show the picked word, unfilled ones show a placeholder, and the final
+  `CATCHPHRASE` line is always last regardless of the order stations were found in.
 - Comparison view after the race: given the small group, a simple shared view/table of
-  who caught what — full-set completion, rare bonus catches, cross-family duplicates —
+  who found what — full-story completion, rare bonus finds, cross-family duplicates —
   is enough; no need for a heavyweight leaderboard system.
 
 ### Map & wayfinding (hint mechanism)
-- A map view on the site shows icons for the 5 main station locations.
-- The 2 bonus stations show only a general **area** on the map (not an exact pin) — this
-  is the "hint": enough to guide a determined family without giving away the exact spot.
+- A **real map** of the actual course (Leaflet + OpenStreetMap) shows markers for the 5
+  main station locations, replacing iteration 1's placeholder static-image approach.
+- The 2 bonus stations show only a general **area circle** on the map (not an exact
+  marker) — this is the "hint": enough to guide a determined family without giving away
+  the exact spot.
+- The map also shows the family's own **live location** (browser Geolocation API), so
+  they can see how close they are to a station relative to where they're standing —
+  requires the browser's location permission prompt and a live network connection to
+  load map tiles.
 - This map view serves as the hint mechanism; no separate stuck-detection/timer-based hint
   trigger is needed on top of it.
+- Real GPS coordinates for every station location are required for this to work — the
+  course walk in the Pre-Race Checklist now needs to capture actual lat/lng, not just
+  verify cell signal.
 
 ### Finish-line challenge
+- On arrival, a family reads their completed (or partial) story aloud — ideally yelled,
+  especially the final `CATCHPHRASE` line — as the "command" that starts their gallop.
 - A single prop type — hobby-horses/stick-ponies — staged at the finish. A family
-  carries **one hobby-horse per horse they caught** for the final stretch (a literal
-  "gallop" to the line) — more caught = more to juggle. Families who caught fewer horses
-  have a lighter (easier) carry; nobody is excluded from the bit.
-- This is simpler to staff than the old per-type-item design: a volunteer just counts
+  carries **one hobby-horse per word they learned** for the final stretch — more learned
+  = more to juggle. Families who found fewer stations have a lighter (easier) carry;
+  nobody is excluded from the bit.
+- This is simpler to staff than a per-type-item design would be: a volunteer just counts
   and hands out the same prop type, no matching different items to different catches
   (this resolves the "finish-line staffing" risk flagged in the last iteration).
 - Logistics: need enough hobby-horses on hand (up to 7 per family, worst case) before
@@ -115,11 +142,15 @@ Kids do the physical finding; parents do the scanning/tapping.
   passcode — full user auth is not warranted for ~8 groups).
 - Capabilities:
   - **Start / stop / reset** the shared race clock.
-  - **Live view of all families/teams** and which horses each has caught so far,
+  - **Live view of all families/teams** and which words each has found so far,
     updating in real time as families scan stations.
   - **Manually add/correct a catch** for a family — this is the fallback for a destroyed
     clue, a QR that won't scan, or a dispute, so a single physical/technical hiccup
     doesn't require rebuilding anything mid-event.
+  - **QR codes for every route** (start + all 7 stations), rendered directly in the
+    admin view so the organizer can test the whole flow — or hand their phone to
+    someone else to scan — without needing the printed physical clues on hand. Useful
+    both before race day (dry runs) and during the event (fixing a station on the fly).
 - This is the organizer's single control point during the event, carried on the
   organizer's own phone — it's what lets one person "mind the store" without being
   physically present at every station.
@@ -139,9 +170,11 @@ Kids do the physical finding; parents do the scanning/tapping.
 
 ## Out of Scope
 - Photo upload/sharing site (dropped).
-- Live GPS tracking, race timing/results, or replacing any existing race-day tooling —
-  there is no external race-day tech to integrate with; the race clock here is just for
-  in-app tension, not official timing.
+- Race timing/results via GPS, or replacing any existing race-day tooling — there is no
+  external race-day tech to integrate with, and the race clock here is just for
+  in-app tension, not official timing. (This is distinct from the map now showing a
+  family's own live position to themselves, client-side only — that's in scope; nothing
+  tracks or stores anyone's location, or shows one family's location to another.)
 - Stuck-detection or explicit "give me a hint" interaction — the map covers this.
 - Typing a team name as the *trigger* to start (the start QR scan is the trigger; name
   entry happens right after, as onboarding, not as the identification mechanic itself).
@@ -155,9 +188,12 @@ Kids do the physical finding; parents do the scanning/tapping.
   fixing, not a security boundary.
 
 ## Pre-Race Checklist
-- Walk the course and verify cell signal at every planned main and bonus station location.
+- Walk the course and: (1) verify cell signal at every planned main and bonus station
+  location, (2) capture real GPS coordinates (lat/lng) for each — both are now required
+  for the map to work, not just a nice-to-have.
 - Do a full end-to-end dry run (start scan → catch at each station → finish) on at least
-  one iPhone and one Android device before race day.
+  one iPhone and one Android device before race day, using the admin view's QR codes to
+  test without needing to physically visit the course.
 - Confirm laminated/weatherproofed clue cards and a way to stake/secure them against wind.
 - Confirm enough hobby-horses/stick-ponies are on hand at the finish (worst case: 7 per
   family), and brief whoever is staffing it — counting and handing out one prop type is
@@ -172,9 +208,14 @@ These came out of an event-planner + technical review and are not yet resolved:
 - ~~**Finish-line staffing**~~ — resolved by the Round-Up theme pivot: a single prop
   type (hobby-horses) means a volunteer just counts and hands out, no matching different
   items to different catches.
-- **Kids' tangible payoff**: right now the "catch" moment lives entirely on a parent's
-  phone. Worth deciding whether kids get any physical artifact of their own (sticker,
-  stamped card) so the memory isn't purely on someone else's screen.
+- **Kids' tangible payoff**: partially addressed by the ad-lib pivot — yelling the
+  finished story/catchphrase at the finish is a real, kid-involving moment, not just a
+  parent looking at a screen. Still worth deciding whether kids get a physical artifact
+  too (sticker, stamped card) on top of that.
 - **Day-of fallback for a broken station**: the admin view's manual-catch-correction
   covers the *digital* side of a failure (QR won't scan, clue destroyed), but there's no
   decided physical fallback (e.g., a backup clue card) if the primary is lost outright.
+- **GPS accuracy in the field**: phone GPS can be slow to lock or a bit inaccurate,
+  especially right at the start of a session. The map/hint experience should degrade
+  gracefully (show markers even before the user's own location resolves) rather than
+  blocking on it.
