@@ -43,20 +43,25 @@ shared state.
     finishedAt: <server timestamp | null>   # set when the finish QR is scanned
     catches:
       /{stationId}
-        wordId: string
+        foundId: string
         caughtAt: <server timestamp>
         manual: boolean   # true if added via admin manual-correction
 ```
+
+`foundId` is deliberately generic (renamed from `wordId`) — it holds a word id for the
+5 horse stations, or a treasure-item id for the 2 gold-cache stations. Same shape either
+way; only the client-side meaning differs based on the station's config.
 
 `finishedAt` is a nice free bonus: paired with the shared race clock's `startedAt`, it
 gives each family an unofficial "your time was X:XX" moment at the reveal — just for fun
 tension, not official timing (per Out of Scope).
 
-Everything else — the list of stations (id, blank type, name, isBonus, position on the
-static map image as a percentage x/y or area radius), the ~10-word pool per blank type,
-the story template, and the generic avatar set — is **static config shipped with the
-app** (TypeScript/JSON under `src/data/`), not stored in the database. It never changes
-at runtime, so there's no reason to pay for a DB round-trip to read it.
+Everything else — the list of stations (id, name, isBonus, optional `blankType` for the
+5 horse stations, position on the static map image as a percentage x/y or area radius),
+the ~10-word pool per horse / ~4-item pool per gold cache, the default value per blank
+type, the story template, and the generic avatar set — is **static config shipped with
+the app** (TypeScript/JSON under `src/data/`), not stored in the database. It never
+changes at runtime, so there's no reason to pay for a DB round-trip to read it.
 
 `familyId` **is the Firebase Anonymous Auth UID**, not a separately-generated key. Every
 device signs in anonymously on first load (`signInAnonymously()`); Firebase persists that
@@ -69,11 +74,12 @@ creates the record at that uid. A brand-new anonymous uid (e.g. a truly differen
 has no path back to an old family's data — that's an accepted limitation given the event
 is same-day/same-device in practice, not a cross-device account system.
 
-## Word Data Source
+## Word & Treasure Data Source
 No external asset source needed anymore (unlike iteration 1's Pokemon sprites, or the
-horse-art problem the first draft of this theme would have created) — the ad-lib story
-and word pools are plain text, transcribed directly from `docs/adlib-words.md` into
-`src/data/adlib.ts`. Nothing to source, generate, or license.
+horse-art problem an earlier draft of this theme would have created) — the ad-lib story
+template, the 5 horse word pools + defaults, and the 2 gold-cache item pools are all
+plain text, transcribed directly from `docs/adlib-words.md` into `src/data/adlib.ts`.
+Nothing to source, generate, or license.
 
 ## Pages / Routes (App Router)
 
@@ -81,12 +87,12 @@ and word pools are plain text, transcribed directly from `docs/adlib-words.md` i
 |---|---|
 | `/` | Home: shared race clock (read-only), status of your own family, nav into the rest |
 | `/start` | Start QR lands here. Signs in anonymously if not already, then checks `/families/{uid}`: if it exists, redirect straight to `/`; if not, show the name+avatar form and create the record at that uid. |
-| `/station/[stationId]` | Clue QR lands here. `stationId` is one of the 7 known blank-type ids (`adjective`, `pluralnoun`, `verb`, `sound`, `number`, `title`, `catchphrase`), pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. If this station is already found by this family, show the existing word (idempotent — re-scanning never re-rolls). Otherwise: random pick from the blank's word pool, write to DB, play the reveal animation. |
-| `/collection` | This family's in-progress ad-lib story, with unfilled blanks shown as placeholders — the everyday "check our progress" view during the race. Also the "proof" screen to show a finish-line volunteer how many hobby-horses to hand over. |
-| `/map` | Static course-image placeholder (organizer-supplied image later) with icons for the 5 main stations positioned by percentage x/y, and a general area (not an exact icon) for the 2 bonus stations. No GPS, no live location — see Resolved below for why. |
-| `/compare` | Shared view of all families and what they've found — full-story completion, bonus finds, cross-family duplicates. |
-| `/finish` | Finish QR lands here. If `/families/{uid}` doesn't exist, redirect to `/start?returnTo=/finish` same as any station. Idempotent like stations — first scan sets `finishedAt` and shows the big final reveal (full story, placeholders for unfound blanks, ending in the shouted catchphrase); re-scanning just re-shows that same reveal. Grants no new word — it's a "seal the story" action, not another catch. |
-| `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + word found, manual add/correct-a-catch, and rendered QR codes for the start URL + all 7 stations + finish. |
+| `/station/[stationId]` | Clue QR lands here. `stationId` is one of the 7 known ids — 5 horse stations (`adjective`, `pluralnoun`, `verb`, `sound`, `number`) + 2 gold-cache stations (`gold1`, `gold2`) — pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. If already found by this family, show the existing find (idempotent — re-scanning never re-rolls). Otherwise: random pick from the station's pool, write to DB, play the reveal animation. Horse stations show "you found [Horse]'s secret command word: '[word]'!"; gold-cache stations show "you found a hidden gold cache: [item]!" — neither ever mentions a story or a blank. |
+| `/collection` | This family's found-so-far list (which horse words, which gold caches) — the everyday "check our progress" view during the race. Framed the same way as the stations themselves (no story/blank language) — the ad-lib nature stays a secret until `/finish`. |
+| `/map` | Static course-image placeholder (organizer-supplied image later) with icons for the 5 horse stations positioned by percentage x/y, and a general area (not an exact icon) for the 2 gold-cache stations. No GPS, no live location — see Resolved below for why. |
+| `/compare` | Shared view of all families and what they've found — full-story completion, gold-cache finds, cross-family duplicates. |
+| `/finish` | Finish QR lands here. If `/families/{uid}` doesn't exist, redirect to `/start?returnTo=/finish` same as any station. Idempotent like stations — first scan sets `finishedAt` and shows the big final reveal: the twist that this was an ad-lib all along, with the 5 horse words (or their fixed defaults, for anything missed) filled into the template, ending in the universal fixed catchphrase (not sourced from any station). Re-scanning just re-shows that same reveal. Grants no new word/treasure, and is unrelated to gold-cache finds — it's a "reveal the story" action, not another catch. |
+| `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + word/gold-cache found, manual add/correct-a-catch, and rendered QR codes for the start URL + all 7 stations + finish. |
 
 Mobile-first layout with an MUI `BottomNavigation` (Home / Map / Collection / Compare) for
 family-facing pages; `/admin` is a separate, unlinked layout not reachable from that nav.
@@ -142,12 +148,12 @@ tampering:
 ## Theming (MUI)
 - Base theme with light/dark support optional (outdoor daytime use — bias toward high
   contrast, legible in direct sunlight; avoid pure white backgrounds that wash out).
-- Per-blank-type accent colors (Adjective, PluralNoun, Verb, Sound, Number, Title,
-  Catchphrase each get a distinct color) used for `Chip`/`Card` accents on the story/
-  collection and compare views, not full theme repaints. Exact palette is a small,
-  low-stakes implementation choice — no need to nail it down here.
-- Key MUI components: `AppBar`, `BottomNavigation`, `Card` (word/story reveal), `Dialog`
-  (reveal flow), `Avatar` (family avatar), `LinearProgress` (story completion),
+- Per-horse accent colors (Sundance, Comet, Phantom, Sunburst, Renegade each get a
+  distinct color) plus one shared "gold" accent for both cache stations, used for
+  `Chip`/`Card` accents on the collection/compare views, not full theme repaints. Exact
+  palette is a small, low-stakes implementation choice — no need to nail it down here.
+- Key MUI components: `AppBar`, `BottomNavigation`, `Card` (word/treasure/story reveal),
+  `Dialog` (reveal flow), `Avatar` (family avatar), `LinearProgress` (story completion),
   `Table`/`DataGrid`-lite (admin + compare), `Snackbar` (toasts, e.g. "word saved").
 
 ## Deployment
@@ -177,8 +183,8 @@ src/
       AdminQrCodes.tsx             # qrcode.react grid for start + 7 station URLs + finish
     layout.tsx                    # MUI ThemeProvider, CssBaseline, BottomNavigation
   data/
-    stations.ts                   # 7 stations: id, blankType, name, isBonus, x/y % or area radius
-    adlib.ts                      # story template + ~10/~4 word pools per blank type
+    stations.ts                   # 7 stations: id, name, isBonus, optional blankType+horseName, x/y % or area radius
+    adlib.ts                      # story template, 5 horse word pools + defaults, 2 gold-cache item pools
     avatars.ts                    # generic avatar set
   lib/
     firebase.ts                   # Firebase app/RTDB/Auth init
@@ -187,7 +193,7 @@ src/
       useRaceClock.ts
       useFamily.ts
       useAllFamilies.ts
-  theme.ts                        # MUI theme + per-blank-type accent colors
+  theme.ts                        # MUI theme + per-horse/gold-cache accent colors
 database.rules.json                 # optional, for version-controlling the open RTDB rules
 ```
 
@@ -201,3 +207,8 @@ database.rules.json                 # optional, for version-controlling the open
   tool — see Admin QR Codes above (supersedes iteration 1's "generate by hand" plan).
 - **Finish**: a dedicated QR-gated route, not a self-directed "read it whenever" screen
   — gives the big reveal moment an unambiguous trigger.
+- **Bonus stations**: repurposed as gold caches, entirely disconnected from the story —
+  simpler than making every station feed the ad-lib, and lets the "surprise, it's an
+  ad-lib!" twist land cleanly since nothing in-course hints at it.
+- **Hobby-horse count**: fixed at one per person, unconditionally — not derived from
+  the app's data at all, so there's no logic to build for it beyond handing them out.

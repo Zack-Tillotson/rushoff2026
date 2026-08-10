@@ -1,72 +1,80 @@
 # Rush Off 5k — Ad-Lib Story & Word Pools
 
-Replaces `horse-roster.md` from earlier in iteration 2 — instead of catching a specific
-named horse at each station, each station teaches your family one **secret command
-word** that fills a blank in a Mad-Libs-style outlaw story. By the finish, your family
-reads (or yells) their completed story, then does the hobby-horse gallop.
+Each of the 5 main stations belongs to a named wild horse — families are told they're
+"learning that horse's secret command word," full stop. **The fact that this is
+building toward a Mad-Libs story is a twist, held back until the finish-line reveal.**
+Nothing in-course should say "story" or "blank" out loud — that's the surprise.
 
-Nice side effect: this drops the "58 pieces of original horse artwork" problem entirely
-— words don't need illustration, just display type. No asset-sourcing blocker anymore.
+The 2 hidden/bonus stations are a totally separate side-collectible — **hidden gold
+caches** — with no connection to the story at all. Finding them is just for bragging
+rights in the comparison view.
 
-## The Story
+Nice side effect kept from the last draft: no illustration/asset work needed — words
+and treasure names are plain text.
+
+## The Story (revealed only at `/finish`)
 
 ```
-Down at Rush Off Ranch rode a [ADJECTIVE] horse thief known far and wide as
-[TITLE]. They'd swipe [NUMBER] [PLURAL_NOUN] before the sun came up, then leap on
-their horse, holler "[SOUND]!", and watch it [VERB] clean out of town. To this
-day, when the coast is clear, the gang still shouts their old rallying cry:
+Down at Rush Off Ranch rode a [ADJECTIVE] horse thief. They'd swipe [NUMBER]
+[PLURAL_NOUN] before the sun came up, then leap on their horse, holler
+"[SOUND]!", and watch it [VERB] clean out of town. To this day, when the coast
+is clear, the gang still shouts their old rallying cry:
 
-"[CATCHPHRASE]!"
+"Yeehaw or bust, partner!"
 ```
 
-- **5 main-station blanks** (single silly words): `ADJECTIVE`, `PLURAL_NOUN`, `VERB`,
-  `SOUND`, `NUMBER`.
-- **2 bonus-station blanks** (bigger, sillier — whole phrases, not single words):
-  `TITLE`, `CATCHPHRASE`.
-- The final `"[CATCHPHRASE]!"` line is the literal yell-it-and-run trigger at the finish
-  — it's always last regardless of which order stations were actually found in.
-- **Missing blanks** (station not found): render as a blank/placeholder — e.g. "...a
-  ??? horse thief..." — rather than skipping the sentence, so a partial story is still
-  readable/funny, not broken. Exact placeholder styling is an implementation detail.
+- **5 blanks total, all from main stations**: `ADJECTIVE`, `PLURAL_NOUN`, `VERB`,
+  `SOUND`, `NUMBER`. No blanks come from the gold-cache stations anymore.
+- The closing catchphrase is **fixed and universal** — same line for every family,
+  every time. It's not sourced from any station, so it's guaranteed to exist and be
+  yell-able regardless of what anyone found. This is the "command" that starts the
+  hobby-horse gallop.
+- **Missing blanks default to a fixed value** (not a random pick, not a "???" — a
+  specific, always-the-same word per blank type, listed below) so a partial story
+  never looks broken. Given the expectation that most/all families reach all 5 main
+  stations, this is mainly a safety net, not the common case.
 
-## Word Pools
+## The 5 Horses (main stations)
 
-### ADJECTIVE (main, 10)
-Wobbly, Sneaky, Squeaky, Dusty, Lopsided, Ticklish, Grumpy, Bouncy, Cross-eyed,
-**Legendary**
+Reveal copy pattern: *"You found [Horse]'s secret command word: '[word]'!"*
 
-### PLURAL_NOUN (main, 10)
-cowboy hats, tumbleweeds, horseshoes, biscuits, lassos, saddlebags, spurs, canteens,
-wanted posters, **gold nuggets**
+| Station id | Horse | Blank | Word pool (10) | Default (if missed) |
+|---|---|---|---|---|
+| `adjective` | **Sundance** | `ADJECTIVE` | Wobbly, Sneaky, Squeaky, Dusty, Lopsided, Ticklish, Grumpy, Bouncy, Cross-eyed, **Legendary** | Mysterious |
+| `pluralnoun` | **Comet** | `PLURAL_NOUN` | cowboy hats, tumbleweeds, horseshoes, biscuits, lassos, saddlebags, spurs, canteens, wanted posters, **gold nuggets** | secrets |
+| `verb` | **Phantom** | `VERB` | wiggle, gallop, moonwalk, cartwheel, hiccup, boogie, zigzag, somersault, sprint, **teleport** | vanish |
+| `sound` | **Sunburst** | `SOUND` | Yeehaw, Whoosh, Kaboom, Ribbit, Boing, Vroom, Ka-pow, Hee-haw, Ka-chow, **SHAZAM** | Shhh |
+| `number` | **Renegade** | `NUMBER` | three, twelve, forty-seven, a hundred, a dozen, seven-and-a-half, eleventy, a bajillion, one million, **infinity-plus-one** | countless |
 
-### VERB (main, 10)
-wiggle, gallop, moonwalk, cartwheel, hiccup, boogie, zigzag, somersault, sprint,
-**teleport**
+The 5 horse names are reused from the very first horse-roster draft (each was that
+color category's "jackpot" name) — a nice callback, and it means each station has a
+character/identity without needing full art or a 10-horse-per-station roster.
 
-### SOUND (main, 10)
-Yeehaw, Whoosh, Kaboom, Ribbit, Boing, Vroom, Ka-pow, Hee-haw, Ka-chow, **SHAZAM**
+Each word pool keeps the same jackpot pattern as before — mostly plain/silly entries,
+one clearly-more-legendary pick (bolded), so the reveal has real variance in
+excitement.
 
-### NUMBER (main, 10)
-three, twelve, forty-seven, a hundred, a dozen, seven-and-a-half, eleventy, a bajillion,
-one million, **infinity-plus-one**
+## Hidden Gold Caches (bonus stations)
 
-### TITLE (bonus, 4 — bigger/sillier)
-"The Tumbleweed Terror", "Sheriff of Snooze-ville", "Duke of Dust",
-**"The Legend of Legends"**
+Framed entirely as treasure-hunting, no horse/story connection. Reveal copy pattern:
+*"You found a hidden gold cache: [item]!"*
 
-### CATCHPHRASE (bonus, 4 — bigger/sillier)
-"Ride like the wind, ya varmints!", "Catch us if your boots can!", "This town ain't big
-enough for a nap!", **"Yeehaw or bust, partner!"**
+| Station id | Pool (4, bigger/sillier) |
+|---|---|
+| `gold1` | a handful of gold dust, a rusty gold coin, a dusty gold nugget, **a chest overflowing with gold!** |
+| `gold2` | a tarnished gold locket, a bent gold spur, a gold-plated belt buckle, **the legendary Rush Off Gold Bar!** |
 
-Each pool follows the same jackpot pattern as iteration 1's roster — mostly plain/silly
-entries, with one clearly-more-legendary pick (bolded) so the reveal has some real
-variance in excitement.
+No default values needed here — these are pure bonus, not required for anything at the
+finish. Missing them just means missing them; nothing degrades.
 
-## Station Identity
-Coat-color categories (Bay/Chestnut/etc.) are dropped. Stations are now identified by
-their word-blank type directly: `adjective`, `pluralnoun`, `verb`, `sound`, `number`
-(main) and `title`, `catchphrase` (bonus) — these become the station ids/routes (e.g.
-`/station/adjective`), replacing `fire`/`water`/etc. from iteration 1.
+## Finish-Line Reveal & Hobby-Horse Gallop
+- Scanning the finish QR reveals the full story (5 blanks filled with whatever was
+  found, defaults filling in the rest) for the first time — the "surprise, it's an
+  ad-lib!" moment — ending in the universal shouted catchphrase.
+- Every participant gets **exactly one hobby-horse, unconditionally** — not scaled by
+  how many stations or gold caches were found. This is a fixed party favor, decided
+  independently of the app; sourcing "how many hobby-horses to buy" is a headcount
+  question for the organizer, not something the app tracks or gates.
 
 ## Generic Family Avatars
 Unchanged — non-theme emoji/icon avatars, represents *who the family is*, distinct from

@@ -3,9 +3,12 @@
 ## Background
 The Rush Off 5k is an annual family fun run (mostly kids + siblings' families), themed
 around its own premise: horse thieves who jump on a horse and rush off. This site drives
-an in-course activity leaning into that — a QR-code hunt where each station teaches your
-family a **secret command word**, building toward a Mad-Libs-style outlaw story that
-your family yells aloud at the finish line to "start" their hobby-horse gallop.
+an in-course activity leaning into that — a QR-code hunt where each station is a named
+wild horse whose **secret command word** your family learns. Unbeknownst to families
+during the hunt, those words are secretly building a Mad-Libs-style outlaw story — a
+twist only revealed at the finish line, ending in a catchphrase everyone yells together
+to "start" their hobby-horse gallop. Two additional hidden stations are a separate,
+unrelated side-collectible: **hidden gold caches**, just for bragging rights.
 
 ## Timeline
 Race day is **Saturday, August 15** — about 5 days out from this doc. The full feature
@@ -23,14 +26,17 @@ Kids do the physical finding; parents do the scanning/tapping.
    flow that's already been tested by the time it matters).
 2. Paper clues (each with its own QR code) are hidden along the race course.
 3. Kids/families physically find a clue; a parent scans the QR code with their phone.
-4. Scanning reveals a reveal screen for that station's **word blank**, then an animation
-   picks a specific word from that blank's pool to add to the family's story.
-5. A family's story fills in over the course of the race as more clues are found —
-   partial blanks show a placeholder until found.
-6. At the finish line, a family scans a **finish QR code** that seals/completes their
-   story and reveals it as one big final moment — ending in the shouted catchphrase —
-   which is the "command" to carry one hobby-horse per word learned and gallop the
-   final stretch. More words learned means more to juggle.
+4. At a main station, scanning reveals "you found [Horse]'s secret command word:
+   '[word]'!" — framed entirely as horse-taming, never mentioning a story or a blank.
+   At a hidden station, scanning reveals a gold-cache find instead — a wholly separate,
+   unrelated bragging-rights collectible.
+5. Families have no idea, during the hunt, that the command words are secretly filling
+   in a Mad-Libs story — that's the twist, held back until the finish.
+6. At the finish line, a family scans a **finish QR code** that reveals the twist: their
+   complete story (any missed words fall back to a fixed default, so it never looks
+   broken), ending in a catchphrase everyone shouts together as the "command" to gallop
+   the final stretch. Every participant gets exactly one hobby-horse, always — this
+   isn't scaled by how much was found.
 7. Throughout, the organizer can monitor and control the event live via an **admin
    view**, which also renders every route's QR code (start, all 7 stations, and finish)
    for testing on the organizer's own phone.
@@ -64,10 +70,11 @@ Kids do the physical finding; parents do the scanning/tapping.
   a single-use token. Every family that scans it independently gets their own catch
   recorded against their own family record. Multiple families can (and will) scan the
   same physical code over the course of the event.
-- **Word randomization**: a family's pick at a station is an independent random draw
-  from that blank's ~10-word pool (~4 for bonus blanks), with replacement *across*
-  families — so two different families can end up with the same word from the same
-  station. This is expected, and is part of what makes the comparison view interesting.
+- **Word/treasure randomization**: a family's pick at a station is an independent random
+  draw from that station's pool (~10 for the 5 horse stations, ~4 for the 2 gold-cache
+  stations), with replacement *across* families — so two different families can end up
+  with the same word or treasure from the same station. This is expected, and is part
+  of what makes the comparison view interesting.
 - **Scale**: ~5 family groups + 3 older kids is a handful of records and a low write
   volume — Realtime Database comfortably covers this; no additional backend needed.
 
@@ -83,24 +90,28 @@ Kids do the physical finding; parents do the scanning/tapping.
   as part of this build). Custom per-family avatars are a follow-up, added later once
   supplied.
 
-### Clue stations & the story
-- **5 main stations** along the course, one per word-blank type: `ADJECTIVE`,
-  `PLURAL_NOUN`, `VERB`, `SOUND`, `NUMBER` — each a single silly word.
-- **2 bonus/hidden stations** for bigger, sillier finds: `TITLE` and `CATCHPHRASE` —
-  each a whole shouted phrase rather than a single word. These are optional/off-path
-  finds, not required to complete the main story. Coat-color categories from the first
-  draft of this theme are dropped entirely — see `docs/adlib-words.md`.
-- Each blank has a pool of ~10 possible words (~4 for the bonus blanks). Scanning a
-  station's QR code shows a reveal screen for that blank, with some reveal UX before
-  showing which specific word was picked.
-- All story text/words are original — no licensed IP involved, so no restrictions on
-  sharing the site publicly if that ever comes up.
-- The story itself (see `docs/adlib-words.md`) is a fixed Mad-Libs template — filled-in
-  blanks show the picked word, unfilled ones show a placeholder, and the final
-  `CATCHPHRASE` line is always last regardless of the order stations were found in.
+### Clue stations: 5 horses + 2 hidden gold caches
+- **5 main stations**, each a named wild horse (Sundance, Comet, Phantom, Sunburst,
+  Renegade — see `docs/adlib-words.md`) whose secret command word you learn. In-course
+  framing is entirely "you tamed this horse's word" — no mention of a story. Each word
+  secretly maps to one blank (`ADJECTIVE`, `PLURAL_NOUN`, `VERB`, `SOUND`, `NUMBER`) in
+  a fixed Mad-Libs template, revealed only at the finish.
+- **2 hidden/bonus stations** are **gold caches** — a completely separate collectible
+  with no connection to the horses or the story. Purely bragging rights via the
+  comparison view. Optional/off-path finds, not required for anything.
+- Each horse station has a pool of ~10 possible words; each gold cache has a pool of ~4
+  (bigger/sillier treasure items). Scanning shows a reveal screen with some reveal UX
+  before showing what was specifically found.
+- All words/treasure names are original — no licensed IP involved, so no restrictions
+  on sharing the site publicly if that ever comes up.
+- **Missing words default to a fixed value per blank** (not random, not a raw
+  placeholder — see `docs/adlib-words.md` for the exact defaults) so a partial story
+  never looks broken. Given the expectation that most/all families reach all 5 horse
+  stations, this is a safety net, not the common case. Gold caches have no default —
+  missing one just means missing it, nothing degrades.
 - Comparison view after the race: given the small group, a simple shared view/table of
-  who found what — full-story completion, rare bonus finds, cross-family duplicates —
-  is enough; no need for a heavyweight leaderboard system.
+  who found what — full-story completion, rare gold-cache finds, cross-family
+  duplicates — is enough; no need for a heavyweight leaderboard system.
 
 ### Map & wayfinding (hint mechanism)
 - A **static course-image placeholder** for now — you'll supply the real map image
@@ -116,21 +127,19 @@ Kids do the physical finding; parents do the scanning/tapping.
 
 ### Finish-line reveal & challenge
 - A **finish QR code**, posted at the finish, is the trigger for the big moment: scanning
-  it seals/completes the family's story and shows it as one dramatic final reveal —
-  ending in the shouted catchphrase — rather than families deciding for themselves when
-  to read/yell it. This gives the moment a clear, unambiguous start (resolves the
-  "when exactly do we read vs. yell it" ambiguity raised in review).
-- Right after that reveal, a single prop type — hobby-horses/stick-ponies — staged at
-  the finish. A family carries **one hobby-horse per word they learned** for the final
-  stretch — more learned = more to juggle. Families who found fewer stations have a
-  lighter (easier) carry; nobody is excluded from the bit.
-- This is simpler to staff than a per-type-item design would be: a volunteer just counts
-  and hands out the same prop type, no matching different items to different catches
-  (this resolves the "finish-line staffing" risk flagged in the last iteration).
-- Logistics: need enough hobby-horses on hand (up to 7 per family, worst case) before
-  race day, plus a physical finish QR code posted at the finish — placement needs to
-  not interfere with the actual race's real finish-line flow/congestion (see Pre-Race
-  Checklist).
+  it is the first time the family sees this was an ad-lib story all along — their words
+  (or defaults, for anything missed) filled into the template, ending in the universal
+  shouted catchphrase. This gives the twist reveal a clear, unambiguous trigger rather
+  than families deciding for themselves when to read/yell it.
+- Every participant gets **exactly one hobby-horse, unconditionally** — fixed, not
+  scaled by how many horses or gold caches were found. This is simpler than a scaled
+  design in every way: no counting, no matching, nobody's carry looks different from
+  anyone else's. It also fully resolves the "finish-line staffing" risk flagged
+  earlier — a volunteer just hands one out per person, full stop.
+- Logistics: source enough hobby-horses for every expected participant (a headcount
+  question, not something the app tracks), plus a physical finish QR code posted at the
+  finish — placement needs to not interfere with the actual race's real finish-line
+  flow/congestion (see Pre-Race Checklist).
 
 ### Race clock
 - A single shared elapsed-time clock, backed by the Realtime Database, shown to everyone
@@ -144,8 +153,8 @@ Kids do the physical finding; parents do the scanning/tapping.
   passcode — full user auth is not warranted for ~8 groups).
 - Capabilities:
   - **Start / stop / reset** the shared race clock.
-  - **Live view of all families/teams** and which words each has found so far,
-    updating in real time as families scan stations.
+  - **Live view of all families/teams** and which horse words/gold caches each has
+    found so far, updating in real time as families scan stations.
   - **Manually add/correct a catch** for a family — this is the fallback for a destroyed
     clue, a QR that won't scan, or a dispute, so a single physical/technical hiccup
     doesn't require rebuilding anything mid-event.
@@ -198,9 +207,9 @@ Kids do the physical finding; parents do the scanning/tapping.
   stake/secure them against wind.
 - Decide exactly where the finish QR gets posted — needs to not interfere with the
   actual race's real finish-line flow/congestion.
-- Confirm enough hobby-horses/stick-ponies are on hand at the finish (worst case: 7 per
-  family), and brief whoever is staffing it — counting and handing out one prop type is
-  simple, but still needs someone assigned.
+- Confirm enough hobby-horses/stick-ponies are on hand at the finish — one per expected
+  participant, unconditionally (a headcount question, no counting-per-family needed) —
+  and have someone assigned to hand them out.
 
 ## Risks & Open Decisions
 These came out of an event-planner + technical review and are not yet resolved:
@@ -208,9 +217,8 @@ These came out of an event-planner + technical review and are not yet resolved:
   animation) is ambitious for a tight build window. If time gets tight, the recommended
   cut is: bonus stations and animation polish slip first; start flow, main 5 stations,
   finish challenge, shared clock, and admin view are the non-negotiable core.
-- ~~**Finish-line staffing**~~ — resolved by the Round-Up theme pivot: a single prop
-  type (hobby-horses) means a volunteer just counts and hands out, no matching different
-  items to different catches.
+- ~~**Finish-line staffing**~~ — fully resolved: one hobby-horse per person,
+  unconditionally. No counting, no matching items to catches, nothing to get wrong.
 - **Kids' tangible payoff**: partially addressed by the ad-lib pivot — yelling the
   finished story/catchphrase at the finish is a real, kid-involving moment, not just a
   parent looking at a screen. Still worth deciding whether kids get a physical artifact
