@@ -93,7 +93,7 @@ Nothing to source, generate, or license.
 | `/map` | Static course-image placeholder (organizer-supplied image later) with icons for the 5 horse stations positioned by percentage x/y, and a general area (not an exact icon) for the 2 gold-cache stations. No GPS, no live location — see Resolved below for why. |
 | `/compare` | Shared view of all families and what they've found — full-story completion, gold-cache finds, cross-family duplicates. |
 | `/finish` | Finish QR lands here. If `/families/{uid}` doesn't exist, redirect to `/start?returnTo=/finish` same as any station. Idempotent like stations — first scan sets `finishedAt` and shows the big final reveal: the twist that this was an ad-lib all along, with the 5 horse words (or their fixed defaults, for anything missed) filled into the template, ending in the universal fixed catchphrase (not sourced from any station). Re-scanning just re-shows that same reveal. Grants no new word/treasure, and is unrelated to gold-cache finds — it's a "reveal the story" action, not another catch. |
-| `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + word/gold-cache found, manual add/correct-a-catch, and rendered QR codes for the start URL + all 7 stations + finish. |
+| `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + word/gold-cache found, manual add/correct-a-catch, manually mark a family as finished (writes `finishedAt` directly — same fallback pattern as manual catch correction, for when the finish QR itself is the thing that's broken), and rendered QR codes for the start URL + all 7 stations + finish. |
 
 Mobile-first layout with an MUI `BottomNavigation` (Home / Map / Collection / Compare) for
 family-facing pages; `/admin` is a separate, unlinked layout not reachable from that nav.
@@ -148,16 +148,81 @@ tampering:
 - Firebase web config (`apiKey`, etc.) is **not a secret** either way — it's meant to be
   public in client bundles.
 
-## Theming (MUI)
-- Base theme with light/dark support optional (outdoor daytime use — bias toward high
-  contrast, legible in direct sunlight; avoid pure white backgrounds that wash out).
-- Per-horse accent colors (Sundance, Comet, Phantom, Sunburst, Renegade each get a
-  distinct color) plus one shared "gold" accent for both cache stations, used for
-  `Chip`/`Card` accents on the collection/compare views, not full theme repaints. Exact
-  palette is a small, low-stakes implementation choice — no need to nail it down here.
-- Key MUI components: `AppBar`, `BottomNavigation`, `Card` (word/treasure/story reveal),
-  `Dialog` (reveal flow), `Avatar` (family avatar), `LinearProgress` (story completion),
-  `Table`/`DataGrid`-lite (admin + compare), `Snackbar` (toasts, e.g. "word saved").
+## Theming & Art Direction (MUI)
+The goal is for the whole app to read as *one* branded thing — an Old West outlaw
+artifact you're interacting with — not a generic Material app with themed copy pasted
+in. That means establishing the look once, structurally, rather than hand-styling each
+page and hoping it stays consistent.
+
+### Visual language
+Take cues from the real event logo (`public/horse-mascot-purple.png`): bold black ink
+line-art, a rope-circle badge motif, vintage rodeo-flyer/wanted-poster energy. Even
+though the logo itself isn't wired in yet (per the earlier decision to hold off), the
+*style* it represents — hand-drawn, high-contrast, slightly rugged — is the reference
+point for everything else, so that whenever it does get wired in, nothing else in the
+app clashes with it.
+
+### Typography
+- A bold Western/vintage **display font for headings and reveal moments only** — e.g.
+  Google Fonts' "Rye" (classic wanted-poster feel) or "Sancreek." Used sparingly: page
+  titles, station/horse names, the finish-line story reveal. Never body text.
+  - Gotcha to plan for: loading a Google Font via `next/font/google` needs network
+    access at build time. Iteration 1 deliberately dropped the default Geist fonts to
+    avoid exactly this dependency when there was no thematic reason to keep it — now
+    there is one, so it's worth re-accepting that build-time fetch.
+- Body text, buttons, and anything read at a glance (the race clock, station instructions)
+  stay on the default clean sans-serif. Outdoor legibility in direct sunlight matters
+  more than flourish for anything functional — decorative type is for moments, not
+  everyday UI.
+
+### Color palette
+- Keep the existing high-contrast, sunlight-legible bias. Define palette values as MUI
+  theme tokens (not hardcoded hex scattered through components), so switching the
+  primary color later (e.g. to the logo's purple, if that decision gets revisited) is a
+  one-line change in `theme.ts`, not a hunt-and-replace.
+- Pull the per-horse/gold-cache accent colors from one cohesive Western palette instead
+  of arbitrary hues, so they read as a family: dusty orange (Sundance), saddle brown
+  (Comet), twilight purple (Phantom), sunset gold (Sunburst), sagebrush green
+  (Renegade), and a shared antique-gold accent for both cache stations.
+
+### Iconography & motifs
+- Swap default MUI icons for themed equivalents at the highest-visibility spots only —
+  bottom nav, key action buttons, reveal screens. A lasso/rope icon instead of a
+  generic map pin, a horseshoe instead of a generic checkmark for "found." Default MUI
+  icons are fine everywhere else — full custom-icon coverage isn't worth the time this
+  build cycle.
+- A **rope-border frame** (echoing the logo's rope circle) as a recurring, deliberate
+  motif — around the family avatar, and especially around reveal cards — used sparingly
+  enough that it reads as intentional branding, not clutter.
+
+### Reveal screens (the highest-emotion moments — treat these as one connected system)
+Station catches, gold-cache finds, and above all the finish-line story reveal are the
+emotional peaks of the whole experience — they deserve the most art-direction attention,
+and should feel like variations of *one* card design, not three unrelated UI patterns:
+- Parchment/wanted-poster card background, rope border, Western display type for the
+  headline word/phrase/story.
+- The finish reveal specifically should feel like unveiling a hidden outlaw document —
+  this is the single moment worth the most polish, since it's the twist payoff the
+  whole build has been leading to.
+
+### Implementation approach
+Establish these choices once in `theme.ts` plus a small set of reusable themed
+component wrappers (e.g. a `<WantedPosterCard>` wrapping MUI's `Card` with the
+parchment/rope treatment baked in) rather than hand-styling each page — that way
+consistency is structural, not dependent on remembering to apply it every time.
+
+### Scope tiers, given the build timeline
+- **Must-have**: display-font headings, the cohesive per-horse/gold color palette, the
+  rope-border reveal-card treatment (via one shared component).
+- **Nice-to-have if time allows**: custom themed iconography beyond nav/reveal screens,
+  parchment texture elsewhere in the app, decorative motifs (lasso flourishes, etc.)
+  outside the reveal moments.
+
+### Key MUI components
+`AppBar`, `BottomNavigation`, `Card` (word/treasure/story reveal, themed per above),
+`Dialog` (reveal flow), `Avatar` (family avatar, rope-framed), `LinearProgress` (story
+completion), `Table`/`DataGrid`-lite (admin + compare), `Snackbar` (toasts, e.g. "word
+saved").
 
 ## Deployment
 - `next build` (with `output: 'export'` in `next.config`) produces a static `out/`
@@ -182,7 +247,7 @@ src/
     finish/page.tsx                # finish QR lands here — reveals the twist, sets finishedAt
     admin/
       page.tsx                    # passcode gate
-      AdminDashboard.tsx           # clock controls, live family table, manual correction
+      AdminDashboard.tsx           # clock controls, live family table, manual catch correction + manual finish trigger
       AdminQrCodes.tsx             # qrcode.react grid for start + 7 station URLs + finish
     layout.tsx                    # MUI ThemeProvider, CssBaseline, BottomNavigation
   data/
@@ -215,3 +280,6 @@ database.rules.json                 # optional, for version-controlling the open
   ad-lib!" twist land cleanly since nothing in-course hints at it.
 - **Hobby-horse count**: fixed at one per person, unconditionally — not derived from
   the app's data at all, so there's no logic to build for it beyond handing them out.
+- **Finish QR as a single point of failure**: closed by extending the existing manual-
+  catch-correction pattern to the finish itself — the admin can set `finishedAt`
+  directly, so a broken/missing finish QR no longer blocks the reveal moment.

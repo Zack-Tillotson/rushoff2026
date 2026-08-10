@@ -158,6 +158,10 @@ Kids do the physical finding; parents do the scanning/tapping.
   - **Manually add/correct a catch** for a family — this is the fallback for a destroyed
     clue, a QR that won't scan, or a dispute, so a single physical/technical hiccup
     doesn't require rebuilding anything mid-event.
+  - **Manually trigger a family's finish reveal** — the same idea, applied to the finish
+    QR specifically: if it's destroyed, won't scan, or a family walks past it, the
+    organizer can set that family as finished directly from the admin view, so the
+    finish QR being a single point of failure no longer blocks the big reveal moment.
   - **QR codes for every route** (start + all 7 stations + finish), rendered directly in
     the admin view so the organizer can test the whole flow — or hand their phone to
     someone else to scan — without needing the printed physical clues on hand. Useful
@@ -165,6 +169,17 @@ Kids do the physical finding; parents do the scanning/tapping.
 - This is the organizer's single control point during the event, carried on the
   organizer's own phone — it's what lets one person "mind the store" without being
   physically present at every station.
+
+### Visual identity & polish
+- The app should feel like *one* cohesive branded artifact — an Old West outlaw
+  object you're interacting with — not a generic app with themed copy pasted in.
+  This matters most at the reveal moments (station catches, gold-cache finds, and
+  especially the finish-line story twist), since those are the emotional peaks of the
+  whole experience and deserve the most visual polish.
+- The real event logo (`public/horse-mascot-purple.png`) is the style reference (bold
+  ink line-art, rope-circle badge, vintage rodeo-flyer energy), even though it's not
+  wired into the app yet per the earlier decision. See `docs/architecture.md`'s Theming
+  & Art Direction section for the concrete typography/color/motif decisions this drives.
 
 ## Target Users
 - **Parents/adult siblings**: carry phones, do the scanning, view the map, collections,
@@ -224,10 +239,10 @@ These came out of an event-planner + technical review and are not yet resolved:
   parent looking at a screen. Still worth deciding whether kids get a physical artifact
   too (sticker, stamped card) on top of that.
 - **Day-of fallback for a broken station**: the admin view's manual-catch-correction
-  covers the *digital* side of a failure (QR won't scan, clue destroyed), but there's no
-  decided physical fallback (e.g., a backup clue card) if the primary is lost outright —
-  this now also applies to the finish QR specifically, since that one's a single point
-  of failure for the whole finale moment.
+  (stations) and manual finish-trigger (finish) now cover the *digital* side of a
+  failure for every route, including the finish QR specifically. Still no decided
+  *physical* fallback (e.g., a backup clue/QR card) if a code is lost/destroyed
+  outright — that half of the risk remains open.
 - ~~**GPS accuracy in the field**~~ — moot now that the dynamic map/GPS is dropped.
 - ~~**Ambiguity in when to read vs. yell the story**~~ — resolved by the finish QR: the
   scan itself is the trigger, not a self-directed decision.
