@@ -56,12 +56,13 @@ way; only the client-side meaning differs based on the station's config.
 gives each family an unofficial "your time was X:XX" moment at the reveal — just for fun
 tension, not official timing (per Out of Scope).
 
-Everything else — the list of stations (id, name, isBonus, optional `blankType` for the
-5 horse stations, position on the static map image as a percentage x/y or area radius),
-the ~10-word pool per horse / ~4-item pool per gold cache, the default value per blank
-type, the story template, and the generic avatar set — is **static config shipped with
-the app** (TypeScript/JSON under `src/data/`), not stored in the database. It never
-changes at runtime, so there's no reason to pay for a DB round-trip to read it.
+Everything else — the list of stations (id, name, isBonus, optional `blankType` +
+`horseName` for the 5 horse stations, position on the static map image as a percentage
+x/y or area radius), the ~10-word pool per horse / ~4-item pool per gold cache, the
+default value per blank type, the story template, and the generic avatar set — is
+**static config shipped with the app** (TypeScript/JSON under `src/data/`), not stored
+in the database. It never changes at runtime, so there's no reason to pay for a DB
+round-trip to read it.
 
 `familyId` **is the Firebase Anonymous Auth UID**, not a separately-generated key. Every
 device signs in anonymously on first load (`signInAnonymously()`); Firebase persists that
@@ -103,8 +104,10 @@ Small hooks wrapping Firebase's `onValue`:
   uid (or `null` while loading). Every other hook builds on this.
 - `useRaceClock()` → `{ status, startedAt, stoppedAt }`, with a local `setInterval` tick
   to recompute elapsed display time between DB updates (avoids a write every second).
-- `useFamily()` → live view of `/families/{useAuthUid()}` (used by `/collection`, and by
-  `/station/[id]` to check for an existing catch before rolling a new one).
+- `useFamily()` → live view of `/families/{useAuthUid()}` (used by `/collection`; by
+  `/station/[id]` to check for an existing find before rolling a new one; and by
+  `/finish` to check `finishedAt` for idempotency and to read all 5 horse-station
+  catches for building the story).
 - `useAllFamilies()` → live list of every family, for `/compare` and `/admin`.
 
 All plain hooks — no global store, and no custom family-identity context needed since
@@ -176,7 +179,7 @@ src/
     collection/page.tsx
     map/page.tsx                  # static placeholder image + positioned icons, no map library
     compare/page.tsx
-    finish/page.tsx                # finish QR lands here — seals the story, sets finishedAt
+    finish/page.tsx                # finish QR lands here — reveals the twist, sets finishedAt
     admin/
       page.tsx                    # passcode gate
       AdminDashboard.tsx           # clock controls, live family table, manual correction
