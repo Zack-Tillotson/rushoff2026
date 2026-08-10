@@ -1,9 +1,11 @@
 # Rush Off 5k — Companion Site Requirements
 
 ## Background
-The Rush Off 5k is an annual family fun run (mostly kids + siblings' families). This site
-drives an in-course activity: a QR-code clue hunt with a Pokemon-style creature collection
-mechanic, capped off with a silly tiered challenge at the finish line.
+The Rush Off 5k is an annual family fun run (mostly kids + siblings' families), themed
+around its own premise: horse thieves who jump on a horse and rush off. This site drives
+an in-course activity leaning into that — a QR-code clue hunt where each station is a
+horse you "steal"/saddle up (a **Round-Up** theme), capped off with a silly tiered
+challenge at the finish line.
 
 ## Timeline
 Race day is **Saturday, August 15** — about 5 days out from this doc. The full feature
@@ -21,11 +23,12 @@ Kids do the physical finding; parents do the scanning/tapping.
    flow that's already been tested by the time it matters).
 2. Paper clues (each with its own QR code) are hidden along the race course.
 3. Kids/families physically find a clue; a parent scans the QR code with their phone.
-4. Scanning reveals a "catch" screen for that station's Pokemon **type**, then an animation/
-   reveal picks a specific Pokemon of that type to add to the family's collection.
-5. A family's collection grows over the course of the race as more clues are found.
-6. At the finish line, families carry a themed item for each type they caught, for the
-   final stretch.
+4. Scanning reveals a "saddle up" screen for that station's horse **coat color/breed**,
+   then an animation/reveal picks a specific named horse of that category to add to the
+   family's herd.
+5. A family's herd grows over the course of the race as more clues are found.
+6. At the finish line, families carry one hobby-horse/stick-pony per horse they caught —
+   more caught means more to juggle for the final stretch.
 7. Throughout, the organizer can monitor and control the event live via an **admin view**.
 
 ## Technical Architecture
@@ -34,7 +37,7 @@ Kids do the physical finding; parents do the scanning/tapping.
   scanner. Must work on mainstream iOS Safari and Android Chrome.
 - **Data store**: Firebase **Realtime Database** as the single shared/central store for:
   - the race clock's state (start timestamp, running/stopped/reset),
-  - family records (name, avatar, and their caught Pokemon per station),
+  - family records (name, avatar, and their caught horses per station),
   - so every family's phone and the admin view stay live-synced with the same shared
     state, with no page refresh needed (this is what makes a *shared* race clock and
     live admin monitoring possible).
@@ -50,9 +53,9 @@ Kids do the physical finding; parents do the scanning/tapping.
   recorded against their own family record. Multiple families can (and will) scan the
   same physical code over the course of the event.
 - **Catch randomization**: a family's catch at a station is an independent random pick
-  from that type's ~10-Pokemon pool, with replacement *across* families — so two
-  different families can end up with the same specific Pokemon from the same station.
-  This is expected, and is part of what makes the comparison view interesting.
+  from that category's ~10-horse pool, with replacement *across* families — so two
+  different families can end up with the same specific named horse from the same
+  station. This is expected, and is part of what makes the comparison view interesting.
 - **Scale**: ~5 family groups + 3 older kids is a handful of records and a low write
   volume — Realtime Database comfortably covers this; no additional backend needed.
 
@@ -69,17 +72,15 @@ Kids do the physical finding; parents do the scanning/tapping.
   supplied.
 
 ### Clue stations & collection
-- **5 main stations** along the course, one per popular/recognizable type: Fire, Water,
-  Electric, Grass, Bug (Bug swapped in for Rock — Rock wasn't earning its spot on either
-  popularity or recognizability, while Bug is the type most kids will already know as
-  "the first thing you catch," and ties in nicely with a real outdoor find-things hunt).
-- **2 bonus/hidden stations** for more dedicated Pokemon fans: Dragon + Ghost. These are
-  optional/off-path finds, not required to complete the main set.
-- Each type has a pool of ~10 possible Pokemon. Scanning a station's QR code shows a
-  "catch the Pokemon" screen for that type, with some reveal UX (e.g. pokeball shake/open
-  animation) before showing which specific Pokemon of that type was caught.
-- Real Pokemon names/art will be used (site is private/family-only, non-commercial, not
-  publicly shared or monetized).
+- **5 main stations** along the course, one per common horse coat color: Bay, Chestnut,
+  Black, Palomino, Pinto.
+- **2 bonus/hidden stations** for rarer, more exotic finds: Appaloosa + Mustang (wild/
+  untamed). These are optional/off-path finds, not required to complete the main set.
+- Each category has a pool of ~10 possible named horses. Scanning a station's QR code
+  shows a "saddle up" screen for that category, with some reveal UX (e.g. a lasso-toss
+  animation) before showing which specific named horse was caught.
+- Horse names/art are original — no licensed IP involved, so no restrictions on sharing
+  the site publicly if that ever comes up (unlike the previous Pokemon-themed iteration).
 - Comparison view after the race: given the small group, a simple shared view/table of
   who caught what — full-set completion, rare bonus catches, cross-family duplicates —
   is enough; no need for a heavyweight leaderboard system.
@@ -92,13 +93,15 @@ Kids do the physical finding; parents do the scanning/tapping.
   trigger is needed on top of it.
 
 ### Finish-line challenge
-- A themed physical item per type (e.g. a pool inflatable for Water) is staged at the
-  finish. A family carries **one item per type they caught** for the final stretch —
-  more types caught = more items to juggle for the last 100m. Families who caught fewer
-  types have a lighter (easier) carry; nobody is excluded from the bit.
-- Logistics: need themed items sourced/assigned for each of the 7 types before race day,
-  plus a plan for how a volunteer matches items to a family's catches at the finish
-  without causing a backup (see Risks & Open Decisions).
+- A single prop type — hobby-horses/stick-ponies — staged at the finish. A family
+  carries **one hobby-horse per horse they caught** for the final stretch (a literal
+  "gallop" to the line) — more caught = more to juggle. Families who caught fewer horses
+  have a lighter (easier) carry; nobody is excluded from the bit.
+- This is simpler to staff than the old per-type-item design: a volunteer just counts
+  and hands out the same prop type, no matching different items to different catches
+  (this resolves the "finish-line staffing" risk flagged in the last iteration).
+- Logistics: need enough hobby-horses on hand (up to 7 per family, worst case) before
+  race day.
 
 ### Race clock
 - A single shared elapsed-time clock, backed by the Realtime Database, shown to everyone
@@ -112,7 +115,7 @@ Kids do the physical finding; parents do the scanning/tapping.
   passcode — full user auth is not warranted for ~8 groups).
 - Capabilities:
   - **Start / stop / reset** the shared race clock.
-  - **Live view of all families/teams** and which Pokemon each has caught so far,
+  - **Live view of all families/teams** and which horses each has caught so far,
     updating in real time as families scan stations.
   - **Manually add/correct a catch** for a family — this is the fallback for a destroyed
     clue, a QR that won't scan, or a dispute, so a single physical/technical hiccup
@@ -136,8 +139,6 @@ Kids do the physical finding; parents do the scanning/tapping.
 
 ## Out of Scope
 - Photo upload/sharing site (dropped).
-- Public/commercial deployment implications of using real Pokemon IP — revisit if this
-  ever needs to be shared beyond the family.
 - Live GPS tracking, race timing/results, or replacing any existing race-day tooling —
   there is no external race-day tech to integrate with; the race clock here is just for
   in-app tension, not official timing.
@@ -158,18 +159,19 @@ Kids do the physical finding; parents do the scanning/tapping.
 - Do a full end-to-end dry run (start scan → catch at each station → finish) on at least
   one iPhone and one Android device before race day.
 - Confirm laminated/weatherproofed clue cards and a way to stake/secure them against wind.
-- Decide and brief whoever is staffing the finish line on how they'll match a family's
-  caught types to the correct carry items without causing a backup.
+- Confirm enough hobby-horses/stick-ponies are on hand at the finish (worst case: 7 per
+  family), and brief whoever is staffing it — counting and handing out one prop type is
+  simple, but still needs someone assigned.
 
 ## Risks & Open Decisions
 These came out of an event-planner + technical review and are not yet resolved:
 - **Scope vs. timeline**: the full feature set (both bonus stations, avatar polish, reveal
-  animation) is ambitious for a 5-day build. If time gets tight, the recommended cut is:
-  bonus stations and animation polish slip first; start flow, main 5 stations, finish
-  challenge, shared clock, and admin view are the non-negotiable core.
-- **Finish-line staffing**: no plan yet for how a volunteer sorts/hands out the correct
-  themed items per family without a queue forming as multiple families arrive close
-  together.
+  animation) is ambitious for a tight build window. If time gets tight, the recommended
+  cut is: bonus stations and animation polish slip first; start flow, main 5 stations,
+  finish challenge, shared clock, and admin view are the non-negotiable core.
+- ~~**Finish-line staffing**~~ — resolved by the Round-Up theme pivot: a single prop
+  type (hobby-horses) means a volunteer just counts and hands out, no matching different
+  items to different catches.
 - **Kids' tangible payoff**: right now the "catch" moment lives entirely on a parent's
   phone. Worth deciding whether kids get any physical artifact of their own (sticker,
   stamped card) so the memory isn't purely on someone else's screen.
