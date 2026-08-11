@@ -83,8 +83,8 @@ Kids do the physical finding; parents do the scanning/tapping.
 - Scanning the shared **start QR code** (posted at the start line) begins a family's
   session and starts tracking their progress — no manual team name typing required to
   *start*, but immediately after scanning, the family enters a **name** and picks a
-  **picture/avatar** to represent them for the rest of the site (collection view, map,
-  comparison view). This creates their record in the Realtime Database.
+  **picture/avatar** to represent them for the rest of the site (collection view, map).
+  This creates their record in the Realtime Database.
 - Avatar picture set: for v1, a handful of **generic/default avatars** only (generated
   as part of this build). Custom per-family avatars are a follow-up, added later once
   supplied.
@@ -110,10 +110,11 @@ Kids do the physical finding; parents do the scanning/tapping.
   (and the running secret-clue count) starts showing; a still-undiscovered second secret
   clue remains unmentioned even then. The point is to never spoil that there's a hidden
   bonus category before a family stumbles onto it themselves.
-- Comparison view after the race: given the small group, a simple shared view/table of
-  who found what — main-clue completion, extra-secret finds, cross-family comparison,
-  and each family's finish time (see Race clock below) — is enough; no need for a
-  heavyweight leaderboard system.
+- **No shared cross-family comparison view** — there is no page showing every family's
+  progress side-by-side. Each family sees only its own progress (collection screen) and
+  its own finish time (finish screen). The organizer can still see every family's
+  progress in the admin view (see Admin view below), just not exposed to families
+  themselves.
 
 ### Map
 - Shows the course map image **as-is, with no pins or overlays** — no per-clue
@@ -150,13 +151,12 @@ Kids do the physical finding; parents do the scanning/tapping.
   starts the clock, every family's home page shows the live elapsed time, the same for
   everyone. Used purely for in-app tension, not as official race timing.
 - Controlled via the admin view (start/stop/reset) — see below.
-- **Every clue find and the finish are timestamped**, and the finish timestamp is
-  surfaced for comparison: a family sees their own elapsed "your time" on the finish
-  welcome screen, and the comparison view shows every family's finish time, sorted
-  fastest-first (families who haven't finished yet, or whose recorded finish predates
-  the current clock start — e.g. after an admin clock reset — sort to the bottom with
-  no time shown, rather than a nonsensical result). This is bragging-rights comparison,
-  not official race timing.
+- **Every clue find and the finish are timestamped.** A family sees their own elapsed
+  "your time" on the finish welcome screen (computed from the finish timestamp and the
+  clock's start time; shown only when both are valid — e.g. not if the recorded finish
+  predates the current clock start after an admin clock reset). This is just for fun,
+  not official race timing, and isn't compared against other families anywhere in the
+  family-facing app (there's no shared comparison view — see Decided Features above).
 
 ### Admin view
 - A separate, organizer-only view of the site, not exposed to families as a normal part

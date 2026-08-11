@@ -30,10 +30,25 @@ real Firebase backend. What remains is genuinely physical/deployment work, not c
 - [x] Finish-time comparison: `src/lib/finishTime.ts` (`getFinishTimeMs`, guards
       against negative time from a stale finish predating a clock reset) + shared
       `src/lib/formatElapsed.ts`. `/finish` shows the family's own time; `/compare`
-      adds a sorted `Time` column.
+      added a sorted `Time` column — **`/compare` was subsequently removed
+      entirely, see 0c below**, so this cross-family time comparison no longer
+      exists anywhere. `getFinishTimeMs`/`formatElapsed` are kept, used only by
+      `/finish` now.
 - [x] Extra-secret clues (6/7) are now genuinely hidden until found — no "0/2
       extra-secret" mention or placeholder card on `/`, `/collection`, or `/finish`
       until a family has found at least one.
+- [x] Admin mobile UX: QR grid → single column, family table → per-family cards
+      with wrapped clue chips (no more horizontal scrolling on a phone).
+
+## 0c. `/compare` removed entirely (done)
+- [x] Deleted `src/app/compare/page.tsx` and the "Compare" tab from `BottomNav.tsx`
+- [x] There is now **no family-facing cross-family comparison of any kind** — no
+      shared clue-progress table, no cross-family finish-time sorting. Each family
+      only ever sees its own progress (`/collection`) and its own finish time
+      (`/finish`). The organizer can still see every family's progress, but only
+      via `/admin`, not exposed to families.
+- [x] Cleaned up now-stale references: `BottomNavigation` tabs (Home/Map/Collection
+      only), `useAllFamilies()`'s remaining consumer is `/admin` only, docs updated
 
 ## 1. Foundation (unchanged from iteration 2, still valid)
 - [x] Next.js + MUI scaffold, static export config

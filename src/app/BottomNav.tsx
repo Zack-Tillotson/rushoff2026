@@ -7,7 +7,6 @@ import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import HomeIcon from "@mui/icons-material/Home";
 import MapIcon from "@mui/icons-material/Map";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 
 // Themed icon swap at the highest-visibility spot (bottom nav) only, per
 // architecture.md's Theming & Art Direction scope tiers — a sheriff's-badge-style icon
@@ -17,7 +16,6 @@ const TABS = [
   { label: "Home", value: "/", icon: <HomeIcon /> },
   { label: "Map", value: "/map", icon: <MapIcon /> },
   { label: "Collection", value: "/collection", icon: <WorkspacePremiumIcon /> },
-  { label: "Compare", value: "/compare", icon: <LeaderboardIcon /> },
 ];
 
 // Not shown on /start, /station/*, /finish, or /admin — those are single-purpose

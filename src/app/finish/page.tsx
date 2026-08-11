@@ -50,8 +50,7 @@ export default function FinishPage() {
 
   const mainCount = MAIN_STATIONS.filter((s) => family.catches?.[s.id]).length;
   const secretCount = SECRET_STATIONS.filter((s) => family.catches?.[s.id]).length;
-  // Marked for cross-family comparison later (see /compare) — just for fun tension,
-  // not official race timing.
+  // Just for fun tension, not official race timing.
   const finishTimeMs = getFinishTimeMs(family, clock);
   const finishTime = finishTimeMs !== null ? formatElapsed(finishTimeMs) : null;
 
