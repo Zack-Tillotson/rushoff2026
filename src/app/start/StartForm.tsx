@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ref, set } from "firebase/database";
 import { getDb } from "@/lib/firebase";
@@ -25,17 +25,16 @@ export default function StartForm() {
   const [avatarId, setAvatarId] = useState(AVATARS[0].id);
   const [submitting, setSubmitting] = useState(false);
 
-  if (family === undefined || uid === null) {
+  useEffect(() => {
+    if (family) router.replace(returnTo);
+  }, [family, returnTo, router]);
+
+  if (family === undefined || uid === null || family) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
         <CircularProgress />
       </Box>
     );
-  }
-
-  if (family) {
-    router.replace(returnTo);
-    return null;
   }
 
   const handleSubmit = async () => {

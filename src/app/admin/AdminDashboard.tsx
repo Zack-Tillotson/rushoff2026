@@ -22,8 +22,9 @@ import { getDb } from "@/lib/firebase";
 import { useRaceClock, useElapsedMs } from "@/lib/hooks/useRaceClock";
 import { useAllFamilies } from "@/lib/hooks/useAllFamilies";
 import { STATIONS } from "@/data/stations";
-import { POKEMON_BY_TYPE, findCaughtPokemon } from "@/data/pokemon";
+import { WORD_POOLS, GOLD_CACHE_POOLS, findWord, findGoldItem } from "@/data/adlib";
 import { getAvatar } from "@/data/avatars";
+import AdminQrCodes from "./AdminQrCodes";
 
 export default function AdminDashboard() {
   const clock = useRaceClock();
@@ -32,7 +33,8 @@ export default function AdminDashboard() {
 
   const [familyId, setFamilyId] = useState("");
   const [stationId, setStationId] = useState(STATIONS[0].id);
-  const [pokemonId, setPokemonId] = useState("");
+  const [foundId, setFoundId] = useState("");
+  const [finishFamilyId, setFinishFamilyId] = useState("");
 
   const startClock = () =>
     set(ref(getDb(), "race/clock"), {
@@ -46,16 +48,22 @@ export default function AdminDashboard() {
     set(ref(getDb(), "race/clock"), { status: "idle", startedAt: null, stoppedAt: null });
 
   const station = STATIONS.find((s) => s.id === stationId)!;
-  const pokemonOptions = POKEMON_BY_TYPE[station.type];
+  const foundOptions = station.kind === "horse" ? WORD_POOLS[station.id] : GOLD_CACHE_POOLS[station.id];
 
   const submitManualCatch = async () => {
-    if (!familyId || !pokemonId) return;
+    if (!familyId || !foundId) return;
     await set(ref(getDb(), `families/${familyId}/catches/${stationId}`), {
-      pokemonId,
+      foundId,
       caughtAt: Date.now(),
       manual: true,
     });
-    setPokemonId("");
+    setFoundId("");
+  };
+
+  const submitManualFinish = async () => {
+    if (!finishFamilyId) return;
+    await set(ref(getDb(), `families/${finishFamilyId}/finishedAt`), Date.now());
+    setFinishFamilyId("");
   };
 
   return (
@@ -95,9 +103,10 @@ export default function AdminDashboard() {
               <TableCell>Family</TableCell>
               {STATIONS.map((s) => (
                 <TableCell key={s.id} align="center">
-                  {s.type}
+                  {s.kind === "horse" ? s.horseName : "Gold"}
                 </TableCell>
               ))}
+              <TableCell align="center">Finished</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -108,15 +117,18 @@ export default function AdminDashboard() {
                 </TableCell>
                 {STATIONS.map((s) => {
                   const caught = family.catches?.[s.id];
-                  const pokemon = caught
-                    ? findCaughtPokemon(s.type, caught.pokemonId)
+                  const found = caught
+                    ? s.kind === "horse"
+                      ? findWord(s.id, caught.foundId)
+                      : findGoldItem(s.id, caught.foundId)
                     : null;
                   return (
                     <TableCell key={s.id} align="center">
-                      {pokemon ? (caught?.manual ? `${pokemon.name} *` : pokemon.name) : "—"}
+                      {found ? (caught?.manual ? `${found.word} *` : found.word) : "—"}
                     </TableCell>
                   );
                 })}
+                <TableCell align="center">{family.finishedAt ? "✅" : "—"}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -129,9 +141,9 @@ export default function AdminDashboard() {
       <Divider sx={{ my: 4 }} />
 
       <Typography variant="h6" gutterBottom>
-        Manually Add/Correct a Catch
+        Manually Add/Correct a Find
       </Typography>
-      <Stack spacing={2} sx={{ maxWidth: 360 }}>
+      <Stack spacing={2} sx={{ maxWidth: 360, mb: 4 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Family</InputLabel>
           <Select
@@ -154,36 +166,69 @@ export default function AdminDashboard() {
             value={stationId}
             onChange={(e) => {
               setStationId(e.target.value);
-              setPokemonId("");
+              setFoundId("");
             }}
           >
             {STATIONS.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.name} ({s.type})
+                {s.kind === "horse" ? s.horseName : "Gold Cache"}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
         <FormControl fullWidth size="small">
-          <InputLabel>Pokemon</InputLabel>
+          <InputLabel>{station.kind === "horse" ? "Word" : "Item"}</InputLabel>
           <Select
-            label="Pokemon"
-            value={pokemonId}
-            onChange={(e) => setPokemonId(e.target.value)}
+            label={station.kind === "horse" ? "Word" : "Item"}
+            value={foundId}
+            onChange={(e) => setFoundId(e.target.value)}
           >
-            {pokemonOptions.map((p) => (
-              <MenuItem key={p.id} value={p.id}>
-                {p.name}
+            {foundOptions.map((w) => (
+              <MenuItem key={w.id} value={w.id}>
+                {w.word}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <Button variant="contained" onClick={submitManualCatch} disabled={!familyId || !pokemonId}>
-          Save Catch
+        <Button variant="contained" onClick={submitManualCatch} disabled={!familyId || !foundId}>
+          Save Find
         </Button>
       </Stack>
+
+      <Typography variant="h6" gutterBottom>
+        Manually Trigger a Finish
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Fallback for when the physical finish QR is broken or a family walks past it —
+        marks a family finished directly, without them scanning.
+      </Typography>
+      <Stack direction="row" spacing={2} sx={{ maxWidth: 480 }}>
+        <FormControl fullWidth size="small">
+          <InputLabel>Family</InputLabel>
+          <Select
+            label="Family"
+            value={finishFamilyId}
+            onChange={(e) => setFinishFamilyId(e.target.value)}
+          >
+            {families
+              .filter((f) => !f.finishedAt)
+              .map((f) => (
+                <MenuItem key={f.id} value={f.id}>
+                  {f.name}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <Button variant="contained" onClick={submitManualFinish} disabled={!finishFamilyId}>
+          Mark Finished
+        </Button>
+      </Stack>
+
+      <Divider sx={{ my: 4 }} />
+
+      <AdminQrCodes />
     </Box>
   );
 }

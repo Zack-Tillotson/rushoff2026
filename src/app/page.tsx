@@ -64,7 +64,7 @@ export default function HomePage() {
               {getAvatar(family.avatarId)?.emoji} {family.name}
             </Typography>
             <Typography variant="body1" sx={{ mt: 1 }}>
-              {caughtCount} / {STATIONS.length} caught
+              {caughtCount} / {STATIONS.length} found
             </Typography>
           </CardContent>
         </Card>

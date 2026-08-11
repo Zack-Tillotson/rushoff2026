@@ -12,7 +12,7 @@ import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 import { useAllFamilies } from "@/lib/hooks/useAllFamilies";
 import { STATIONS } from "@/data/stations";
-import { findCaughtPokemon } from "@/data/pokemon";
+import { findWord, findGoldItem } from "@/data/adlib";
 import { getAvatar } from "@/data/avatars";
 
 export default function ComparePage() {
@@ -36,7 +36,7 @@ export default function ComparePage() {
                 <TableCell>Family</TableCell>
                 {STATIONS.map((s) => (
                   <TableCell key={s.id} align="center">
-                    {s.type}
+                    {s.kind === "horse" ? s.horseName : "Gold"}
                   </TableCell>
                 ))}
                 <TableCell align="center">Total</TableCell>
@@ -52,13 +52,15 @@ export default function ComparePage() {
                     </TableCell>
                     {STATIONS.map((station) => {
                       const caught = family.catches?.[station.id];
-                      const pokemon = caught
-                        ? findCaughtPokemon(station.type, caught.pokemonId)
+                      const found = caught
+                        ? station.kind === "horse"
+                          ? findWord(station.id, caught.foundId)
+                          : findGoldItem(station.id, caught.foundId)
                         : null;
                       return (
                         <TableCell key={station.id} align="center">
-                          {pokemon ? (
-                            <Tooltip title={pokemon.name}>
+                          {found ? (
+                            <Tooltip title={found.word}>
                               <span>✅</span>
                             </Tooltip>
                           ) : (

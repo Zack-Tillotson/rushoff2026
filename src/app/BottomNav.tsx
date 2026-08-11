@@ -6,19 +6,23 @@ import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import HomeIcon from "@mui/icons-material/Home";
 import MapIcon from "@mui/icons-material/Map";
-import CatchingPokemonIcon from "@mui/icons-material/CatchingPokemon";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 
+// Themed icon swap at the highest-visibility spot (bottom nav) only, per
+// architecture.md's Theming & Art Direction scope tiers — a sheriff's-badge-style icon
+// for "Collection" instead of the leftover Pokemon-specific one. Custom lasso/horseshoe
+// iconography beyond this is explicitly deferred as nice-to-have.
 const TABS = [
   { label: "Home", value: "/", icon: <HomeIcon /> },
   { label: "Map", value: "/map", icon: <MapIcon /> },
-  { label: "Collection", value: "/collection", icon: <CatchingPokemonIcon /> },
+  { label: "Collection", value: "/collection", icon: <WorkspacePremiumIcon /> },
   { label: "Compare", value: "/compare", icon: <LeaderboardIcon /> },
 ];
 
-// Not shown on /start, /station/*, or /admin — those are single-purpose flows, not
-// part of the everyday family navigation.
-const HIDDEN_ON = ["/start", "/station", "/admin"];
+// Not shown on /start, /station/*, /finish, or /admin — those are single-purpose
+// flows, not part of the everyday family navigation.
+const HIDDEN_ON = ["/start", "/station", "/finish", "/admin"];
 
 export default function BottomNav() {
   const pathname = usePathname();

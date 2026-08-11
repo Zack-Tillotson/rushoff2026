@@ -1,7 +1,5 @@
-import type { StationType } from "@/data/stations";
-
 export interface Catch {
-  pokemonId: string;
+  foundId: string;
   caughtAt: number;
   manual?: boolean;
 }
@@ -10,7 +8,8 @@ export interface Family {
   name: string;
   avatarId: string;
   createdAt: number;
-  catches?: Partial<Record<StationType, Catch>>;
+  finishedAt?: number | null;
+  catches?: Record<string, Catch>;
 }
 
 export type ClockStatus = "idle" | "running" | "stopped";

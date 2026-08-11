@@ -3,8 +3,8 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
-import { STATIONS, MAIN_STATIONS, BONUS_STATIONS } from "@/data/stations";
-import { TYPE_COLORS } from "@/theme";
+import { HORSE_STATIONS, GOLD_STATIONS } from "@/data/stations";
+import { HORSE_COLORS, GOLD_COLOR } from "@/theme";
 
 export default function MapPage() {
   return (
@@ -13,43 +13,43 @@ export default function MapPage() {
         Course Map
       </Typography>
       <Typography variant="body2" sx={{ mb: 2 }}>
-        Pins mark the {MAIN_STATIONS.length} main stations. The shaded circles are the{" "}
-        {BONUS_STATIONS.length} bonus stations — somewhere in that area, not marked
+        Pins mark the {HORSE_STATIONS.length} wild horses. The shaded circles are the{" "}
+        {GOLD_STATIONS.length} hidden gold caches — somewhere in that area, not marked
         exactly. That&apos;s the hint!
       </Typography>
 
-      {/* TODO: replace this placeholder with /public/course-map.jpg (real course image)
-          once available, and set it as the background image below. */}
       <Box
         sx={{
           position: "relative",
           width: "100%",
-          aspectRatio: "4 / 5",
+          aspectRatio: "1472 / 705",
           borderRadius: 2,
-          background: "linear-gradient(135deg, #a5d6a7 0%, #81c784 100%)",
+          backgroundImage: "url(/course-map.png)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
           overflow: "hidden",
           border: "1px solid #ccc",
         }}
       >
-        {BONUS_STATIONS.map((station) => (
+        {GOLD_STATIONS.map((station) => (
           <Box
             key={station.id}
             sx={{
               position: "absolute",
               left: `${station.map.x}%`,
               top: `${station.map.y}%`,
-              width: `${(station.map.radius ?? 10) * 2}%`,
-              height: `${(station.map.radius ?? 10) * 2}%`,
+              width: `${station.map.radius * 2}%`,
+              height: `${station.map.radius * 2}%`,
               transform: "translate(-50%, -50%)",
               borderRadius: "50%",
-              bgcolor: TYPE_COLORS[station.type],
-              opacity: 0.3,
+              bgcolor: GOLD_COLOR[station.id],
+              opacity: 0.35,
             }}
           />
         ))}
 
-        {STATIONS.map((station) => (
-          <Tooltip key={station.id} title={`${station.name} (${station.type})`}>
+        {HORSE_STATIONS.map((station) => (
+          <Tooltip key={station.id} title={station.horseName}>
             <Box
               sx={{
                 position: "absolute",
@@ -59,10 +59,8 @@ export default function MapPage() {
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                bgcolor: station.isBonus ? "white" : TYPE_COLORS[station.type],
-                border: station.isBonus
-                  ? `3px dashed ${TYPE_COLORS[station.type]}`
-                  : "2px solid white",
+                bgcolor: HORSE_COLORS[station.id],
+                border: "2px solid white",
                 boxShadow: 2,
               }}
             />
