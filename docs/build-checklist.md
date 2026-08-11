@@ -1,8 +1,8 @@
 # Rush Off 5k — Build Checklist (Iteration 3)
 
 Ordered by dependency. Cross-reference `requirements.md`, `architecture.md`,
-`clue-copy.md`. **All app code is implemented and verified end-to-end** against the
-real Firebase backend. What remains is genuinely physical/deployment work, not code.
+`clue-copy.md`. **The app is built, deployed, and live at
+https://rushoff2026.web.app.** What remains is physical prep, not code/deploy work.
 
 ## 0. Simplification from Iteration 2 (done)
 - [x] Delete `src/data/adlib.ts` entirely — no more words/items/story template
@@ -69,15 +69,28 @@ test data cleared from the DB after each verification pass.
 race day — automated browser testing doesn't exercise the actual camera/QR-scanner
 hardware path.
 
-## 3. Deploy — still open
-- [x] `next build` (static export) — confirmed working locally (`out/` generates clean,
-      all 9 routes pre-render, including the renumbered `/station/1`–`/station/7`)
-- [ ] `firebase deploy --only hosting` — not yet run; app has only been verified via
-      local dev server, not the actual deployed URL
-- [ ] `firebase deploy --only database` (open rules) — `database.rules.json` is written
-      but not yet formally deployed (the live DB is reachable directly via REST during
-      testing since rules are already effectively open, but the file itself hasn't
-      been pushed via the CLI)
+## 3. Deploy (done)
+- [x] `next build` (static export) — `out/` generates clean, all routes pre-render
+- [x] `firebase deploy --only hosting` — **live at https://rushoff2026.web.app**
+- [x] Fixed a real deploy bug found during verification: every route except `/`
+      404'd on the live site (Firebase Hosting needs `cleanUrls: true` to map
+      `/start` → `start.html`; Next's static export doesn't emit `/start/index.html`
+      the way Firebase's default routing expects). Added `cleanUrls: true` to
+      `firebase.json`, redeployed, confirmed all 9 routes (`/`, `/start`,
+      `/admin`, `/collection`, `/map`, `/finish`, `/station/1`–`/station/7`) return
+      200, and `/compare` correctly still 404s.
+- [x] Verified `identitytoolkit.googleapis.com` (Firebase Auth) is reachable from
+      the live origin via `curl` (200) — a full Playwright browser check against
+      the live URL specifically couldn't run in this dev sandbox (its DNS resolves
+      Google API domains into CGNAT space, which Chromium's Private Network Access
+      blocks from a "public" origin like the deployed site — this didn't affect any
+      of the `localhost` testing all session, which is why it wasn't caught until
+      now). Not a production bug; **worth one manual live check on a real phone**
+      before race day to be certain, same as the existing real-phone-pass item below.
+- [ ] `firebase deploy --only database` — `database.rules.json` (open rules) not yet
+      formally pushed via the CLI. The live DB is already reachable/writable via
+      REST (rules are already effectively open from console configuration), so
+      this is just about keeping the rules file in sync, not a functional gap.
 
 ## 4. Physical Prep — still open
 - [ ] Decide exact physical placement for all 5 main clues + 2 secret clues along the

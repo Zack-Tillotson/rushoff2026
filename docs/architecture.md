@@ -295,7 +295,13 @@ cards instead (see Admin Family List above).
   directory.
 - `firebase.json` hosting config points at `out/` as the public directory — plain static
   file hosting, no framework integration/Cloud Functions involved.
-- `firebase deploy --only hosting` deploys it.
+- **`cleanUrls: true` is required** in the hosting config. Next's static export emits
+  `start.html`, `admin.html`, `station/1.html`, etc. (not `start/index.html` per
+  route) — without `cleanUrls`, Firebase Hosting only serves exact filename matches, so
+  every route except `/` 404s. This was caught during the first real deploy (every
+  route but the home page returned 404 on the live site) and fixed by adding the flag.
+- `firebase deploy --only hosting` deploys it. **Live at
+  https://rushoff2026.web.app.**
 - Realtime Database rules (fully open, per Security above) and Anonymous Auth are
   configured directly in the Firebase console, or via `firebase deploy --only database`
   using `database.rules.json` if it's easier to keep that in version control.
