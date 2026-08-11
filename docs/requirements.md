@@ -124,6 +124,13 @@ Kids do the physical finding; parents do the scanning/tapping.
 - No GPS coordinates needed for stations — placement is just positioning icons on
   whatever image you supply, same lightweight approach as the original iteration-2 plan
   before the (now-dropped) real-map detour.
+- **There-and-back course**: the actual race route goes out and back along the same
+  path, so every family passes every station twice. Rather than changing station
+  placement to avoid this (e.g. clustering stations near the turnaround), the app just
+  nudges families with copy — home, collection, and map screens all remind an
+  incomplete family that anything unfound is worth a second look on the way back.
+  Scanning is already idempotent, so passing an already-found station a second time is
+  harmless either way.
 
 ### Finish-line reveal & challenge
 - A **finish QR code**, posted at the finish, is the trigger for the big moment: scanning

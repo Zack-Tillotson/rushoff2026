@@ -14,6 +14,7 @@ import { randomWord, findWord, randomGoldItem, findGoldItem } from "@/data/adlib
 import type { Station } from "@/data/stations";
 import { HORSE_COLORS, GOLD_COLOR } from "@/theme";
 import WantedPosterCard from "@/app/WantedPosterCard";
+import BackToHomeLink from "@/app/BackToHomeLink";
 
 // Reveal copy is deliberately horse-taming / treasure-hunting only — never mentions a
 // "story" or "blank." The ad-lib nature is a twist held back until /finish.
@@ -28,9 +29,12 @@ export default function StationCatch({ station }: { station: Station }) {
 
   if (uid === null || family === undefined || family === null) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
-        <CircularProgress />
-      </Box>
+      <>
+        <BackToHomeLink />
+        <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
+          <CircularProgress />
+        </Box>
+      </>
     );
   }
 
@@ -57,61 +61,64 @@ export default function StationCatch({ station }: { station: Station }) {
   const accentColor = station.kind === "horse" ? HORSE_COLORS[station.id] : GOLD_COLOR[station.id];
 
   return (
-    <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
-      {station.kind === "horse" ? (
-        <>
-          <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
-            Wild Horse
-          </Typography>
-          <Typography variant="h4" gutterBottom>
-            {station.horseName}
-          </Typography>
-        </>
-      ) : (
-        <>
-          <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
-            Hidden Gold Cache
-          </Typography>
-          <Typography variant="h4" gutterBottom>
-            You found something!
-          </Typography>
-        </>
-      )}
+    <>
+      <BackToHomeLink />
+      <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
+        {station.kind === "horse" ? (
+          <>
+            <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
+              Wild Horse
+            </Typography>
+            <Typography variant="h4" gutterBottom>
+              {station.horseName}
+            </Typography>
+          </>
+        ) : (
+          <>
+            <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
+              Hidden Gold Cache
+            </Typography>
+            <Typography variant="h4" gutterBottom>
+              You found something!
+            </Typography>
+          </>
+        )}
 
-      {foundEntry ? (
-        <Grow in>
-          <Box sx={{ mt: 2 }}>
-            <WantedPosterCard accentColor={accentColor}>
-              {station.kind === "horse" ? (
-                <>
-                  <Typography variant="h5">
-                    {station.horseName}&apos;s secret command word:
-                  </Typography>
-                  <Typography variant="h3" sx={{ mt: 1 }}>
-                    &ldquo;{foundEntry.word}&rdquo;
-                  </Typography>
-                </>
-              ) : (
-                <Typography variant="h5">You found: {foundEntry.word}</Typography>
-              )}
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Already found here!
-              </Typography>
-            </WantedPosterCard>
+        {foundEntry ? (
+          <Grow in>
+            <Box sx={{ mt: 2 }}>
+              <WantedPosterCard accentColor={accentColor}>
+                {station.kind === "horse" ? (
+                  <>
+                    <Typography variant="h5">
+                      {station.horseName}&apos;s secret command word:
+                    </Typography>
+                    <Typography variant="h3" sx={{ mt: 1 }}>
+                      &ldquo;{foundEntry.word}&rdquo;
+                    </Typography>
+                  </>
+                ) : (
+                  <Typography variant="h5">You found: {foundEntry.word}</Typography>
+                )}
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Already found here!
+                </Typography>
+              </WantedPosterCard>
+            </Box>
+          </Grow>
+        ) : (
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              {station.kind === "horse"
+                ? `You found ${station.horseName}! Tap below to learn its secret command word.`
+                : "Tap below to see what's inside the cache."}
+            </Typography>
+            <Button variant="contained" size="large" onClick={handleFind} disabled={catching}>
+              {catching ? "..." : station.kind === "horse" ? "Tame the Horse!" : "Open the Cache!"}
+            </Button>
           </Box>
-        </Grow>
-      ) : (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="body1" sx={{ mb: 3 }}>
-            {station.kind === "horse"
-              ? `You found ${station.horseName}! Tap below to learn its secret command word.`
-              : "Tap below to see what's inside the cache."}
-          </Typography>
-          <Button variant="contained" size="large" onClick={handleFind} disabled={catching}>
-            {catching ? "..." : station.kind === "horse" ? "Tame the Horse!" : "Open the Cache!"}
-          </Button>
-        </Box>
-      )}
-    </Box>
+        )}
+      </Box>
+    </>
   );
 }

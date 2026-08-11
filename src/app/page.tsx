@@ -66,6 +66,12 @@ export default function HomePage() {
             <Typography variant="body1" sx={{ mt: 1 }}>
               {caughtCount} / {STATIONS.length} found
             </Typography>
+            {caughtCount < STATIONS.length && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                It&apos;s a there-and-back course — keep an eye out on your way back
+                for anything you missed on the way out!
+              </Typography>
+            )}
           </CardContent>
         </Card>
       ) : (

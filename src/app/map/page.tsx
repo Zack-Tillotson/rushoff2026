@@ -15,7 +15,9 @@ export default function MapPage() {
       <Typography variant="body2" sx={{ mb: 2 }}>
         Pins mark the {HORSE_STATIONS.length} wild horses. The shaded circles are the{" "}
         {GOLD_STATIONS.length} hidden gold caches — somewhere in that area, not marked
-        exactly. That&apos;s the hint!
+        exactly. That&apos;s the hint! Since it&apos;s a there-and-back course,
+        you&apos;ll pass every pin twice — a good chance to mop up anything missed on
+        the way out.
       </Typography>
 
       <Box

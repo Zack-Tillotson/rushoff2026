@@ -13,6 +13,7 @@ import { useFamily } from "@/lib/hooks/useFamily";
 import { STORY_TEMPLATE, CATCHPHRASE, BLANK_DEFAULTS, findWord } from "@/data/adlib";
 import type { BlankType } from "@/data/adlib";
 import WantedPosterCard from "@/app/WantedPosterCard";
+import BackToHomeLink from "@/app/BackToHomeLink";
 
 const BLANK_TYPES: BlankType[] = ["adjective", "pluralnoun", "verb", "sound", "number"];
 
@@ -38,9 +39,12 @@ export default function FinishPage() {
 
   if (uid === null || family === undefined || family === null) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
-        <CircularProgress />
-      </Box>
+      <>
+        <BackToHomeLink />
+        <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
+          <CircularProgress />
+        </Box>
+      </>
     );
   }
 
@@ -55,29 +59,32 @@ export default function FinishPage() {
   );
 
   return (
-    <Box sx={{ p: 3, maxWidth: 560, mx: "auto", textAlign: "center" }}>
-      <Typography variant="overline" sx={{ fontWeight: 700 }}>
-        The Truth Revealed
-      </Typography>
-      <Typography variant="h4" gutterBottom>
-        You've been telling a legend all along...
-      </Typography>
+    <>
+      <BackToHomeLink />
+      <Box sx={{ p: 3, maxWidth: 560, mx: "auto", textAlign: "center" }}>
+        <Typography variant="overline" sx={{ fontWeight: 700 }}>
+          The Truth Revealed
+        </Typography>
+        <Typography variant="h4" gutterBottom>
+          You've been telling a legend all along...
+        </Typography>
 
-      <Grow in>
-        <Box sx={{ mt: 3 }}>
-          <WantedPosterCard>
-            <Typography variant="body1" sx={{ fontSize: "1.15rem", lineHeight: 1.8 }}>
-              {STORY_TEMPLATE(blanks)}
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h4">"{CATCHPHRASE}"</Typography>
-          </WantedPosterCard>
-        </Box>
-      </Grow>
+        <Grow in>
+          <Box sx={{ mt: 3 }}>
+            <WantedPosterCard>
+              <Typography variant="body1" sx={{ fontSize: "1.15rem", lineHeight: 1.8 }}>
+                {STORY_TEMPLATE(blanks)}
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h4">"{CATCHPHRASE}"</Typography>
+            </WantedPosterCard>
+          </Box>
+        </Grow>
 
-      <Typography variant="body1" sx={{ mt: 4 }}>
-        Now grab your hobby-horse and gallop to the finish — yell it loud!
-      </Typography>
-    </Box>
+        <Typography variant="body1" sx={{ mt: 4 }}>
+          Now grab your hobby-horse and gallop to the finish — yell it loud!
+        </Typography>
+      </Box>
+    </>
   );
 }

@@ -39,10 +39,17 @@ export default function CollectionPage() {
       <Typography variant="h4" gutterBottom>
         Your Finds
       </Typography>
-      <Typography variant="body1" sx={{ mb: 3 }}>
+      <Typography variant="body1" sx={{ mb: 1 }}>
         {foundCount} / {STATIONS.length} found so far. Once you've found all 5 wild
         horses, head to the finish line for a big surprise!
       </Typography>
+      {foundCount < STATIONS.length && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          This is a there-and-back course, so you'll pass every spot twice — anything
+          still marked &ldquo;not found yet&rdquo; below is worth a second look on
+          your way back.
+        </Typography>
+      )}
 
       <Grid container spacing={2}>
         {STATIONS.map((station) => {
