@@ -99,7 +99,7 @@ export default function StartForm() {
             disabled={!name.trim() || submitting}
             onClick={handleSubmit}
           >
-            {submitting ? "Starting..." : "Start the Hunt"}
+            {submitting ? "Starting..." : "Join the race"}
           </Button>
         </Stack>
       </Box>

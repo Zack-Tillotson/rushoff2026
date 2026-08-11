@@ -85,7 +85,7 @@ export default function HomePage() {
         </Card>
       ) : (
         <Button variant="contained" size="large" onClick={() => router.push("/start")}>
-          Start the Hunt
+          Join the race
         </Button>
       )}
     </Box>

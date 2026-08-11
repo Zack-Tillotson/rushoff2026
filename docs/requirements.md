@@ -98,6 +98,9 @@ Kids do the physical finding; parents do the scanning/tapping.
 - Scanning a clue's QR code shows a simple, immediate confirmation — "You found Clue
   #3! One step closer to the gang." for a main clue, or similar extra-credit framing for
   clues 6/7 — with no random reveal, no item, no word. Just credit for the find.
+- **No extra tap required to record the find** — just scanning the QR code and landing
+  on the page is enough; the credit is recorded automatically the moment the page loads.
+  No "confirm"/"found it" button to press on top of the scan itself.
 - No licensed IP involved, so no restrictions on sharing the site publicly if that ever
   comes up.
 - **Progress display is simple counts, not a point score**: "5/5 main clues found" and

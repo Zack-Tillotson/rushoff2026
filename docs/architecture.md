@@ -87,7 +87,7 @@ itself (`stations.ts`) and the generic avatar set (`avatars.ts`).
 |---|---|
 | `/` | Home: shows the shared race clock **only once it's running/stopped** — before the organizer starts it, shows a simple "hasn't started yet" message instead of a "0:00". Also shows this family's status (name/avatar, X/5 main + Y/2 secret found) and nav into the rest. |
 | `/start` | Start QR lands here. Signs in anonymously if not already, then checks `/families/{uid}`: if it exists, redirect straight to `/`; if not, show the name+avatar form and create the record at that uid. |
-| `/station/[stationId]` | Clue QR lands here. `stationId` is one of `'1'`–`'7'` (main clues `1`–`5`, extra-secret clues `6`–`7`) — pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. Shows a simple "found it" confirmation with a button; tapping writes `catches/{id}` with just a timestamp. Idempotent — if already found, shows "Already found!" instead of a button, no re-roll (there's nothing to re-roll). |
+| `/station/[stationId]` | Clue QR lands here. `stationId` is one of `'1'`–`'7'` (main clues `1`–`5`, extra-secret clues `6`–`7`) — pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. **No button** — visiting the page is enough: a `useEffect` writes `catches/{id}` (just a timestamp) automatically on first load if not already found, then shows the celebratory confirmation. Idempotent — a repeat visit skips the write and shows "already found" copy instead of the celebratory copy (see Auto-Record on Visit below for how it tells the two apart). |
 | `/collection` | This family's found-so-far list across all 7 clues, with separate main (X/5) and extra-secret (Y/2) counts — no story/word language, since there's no story anymore. |
 | `/map` | Shows `course-map.png` as-is — no pins, no overlays, no per-clue positioning. Tapping it opens the raw image in a new tab so the phone's native image viewer handles pinch-zoom. |
 | `/finish` | Finish QR lands here. If `/families/{uid}` doesn't exist, redirect to `/start?returnTo=/finish` same as any clue. Idempotent — first scan sets `finishedAt` and shows the welcome-to-the-gang screen (X/5 main + Y/2 secret found, secret count omitted entirely if zero — see Extra-Secret Clue Secrecy below); re-scanning just re-shows the same welcome screen. Grants no new find — it's a "you're in" celebration, not another catch. Also shows the family's own elapsed finish time. |
@@ -103,6 +103,24 @@ into the app if the phone's browser/QR-scanner view has no visible back button.
 was removed — there is no page where families see each other's progress or finish
 times side-by-side. A family only ever sees its own state (`/collection`, `/finish`);
 the organizer still sees everyone's progress, but only in `/admin`.
+
+## Auto-Record on Visit
+`/station/[id]` records a find automatically on page load — no confirmation button.
+Just scanning the QR (which lands on this page) is the whole interaction:
+- A `useState<boolean | null>` snapshots whether the clue **was already found before
+  this visit**, captured once when `family` first resolves — this is the only way to
+  distinguish "just found it now" (show the celebratory line) from "found it on a
+  previous visit" (show the "already found" line), since after the auto-write both
+  look identical in the database.
+- If that snapshot is `false` (wasn't found before), the same effect fires the write —
+  `set(catches/{id}, { caughtAt: Date.now() })` — immediately, no user action between
+  landing on the page and the write happening.
+- If it's `true` (already found), no write happens at all; the page just shows the
+  "already found" copy. Idempotent, same as the old button-based flow, just without the
+  button.
+- This removes one interaction step from the physical hunt: a parent scans, glances at
+  the phone, and that's it — no "now tap this too" second action standing between the
+  scan and credit being recorded.
 
 ## Real-time Sync
 Small hooks wrapping Firebase's `onValue`:
@@ -199,11 +217,12 @@ intentionally minimal — optimize for "ships and works," not for resisting tamp
   one-day lifespan of the data, this is accepted outright rather than engineered around.
   Lock the rules down (or just delete the database) after race day.
 - **Deliberately deferred**: RTDB `.validate` schema rules, and transactional/atomic
-  writes for the find flow to guard against double-tap races. At ~8 families this class
-  of bug is unlikely to occur even once, and if it does, the admin's manual-correction
-  feature is the fix — cheaper than building prevention for a scenario this rare. (This
-  matters even less now than in iteration 2 — with no randomness, a double-tap just
-  writes the same "found" timestamp twice, which is harmless.)
+  writes for the find flow to guard against duplicate-write races (e.g. the auto-record
+  effect firing more than once for the same visit). At ~8 families this class of bug is
+  unlikely to occur even once, and if it does, the admin's manual-correction feature is
+  the fix — cheaper than building prevention for a scenario this rare. With no
+  randomness and no button, a duplicate write just re-writes the same "found" timestamp,
+  which is harmless.
 - Firebase web config (`apiKey`, etc.) is **not a secret** either way — it's meant to be
   public in client bundles.
 
@@ -342,3 +361,6 @@ database.rules.json                 # optional, for version-controlling the open
 - **No `/compare` route**: removed along with its bottom-nav entry. There is no
   family-facing cross-family comparison anywhere in the app anymore — only the
   organizer (via `/admin`) sees every family's progress.
+- **No confirmation button on `/station/[id]`**: visiting the page is enough — the
+  find is recorded automatically. Removes a second physical step (scan, then also tap)
+  from every clue interaction. See Auto-Record on Visit above.
