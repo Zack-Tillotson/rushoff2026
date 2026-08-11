@@ -3,8 +3,8 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
-import { HORSE_STATIONS, GOLD_STATIONS } from "@/data/stations";
-import { HORSE_COLORS, GOLD_COLOR } from "@/theme";
+import { MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
+import { CLUE_COLORS } from "@/theme";
 
 export default function MapPage() {
   return (
@@ -13,9 +13,9 @@ export default function MapPage() {
         Course Map
       </Typography>
       <Typography variant="body2" sx={{ mb: 2 }}>
-        Pins mark the {HORSE_STATIONS.length} wild horses. The shaded circles are the{" "}
-        {GOLD_STATIONS.length} hidden gold caches — somewhere in that area, not marked
-        exactly. That&apos;s the hint! Since it&apos;s a there-and-back course,
+        Pins mark the {MAIN_STATIONS.length} main clues. The shaded circles are the{" "}
+        {SECRET_STATIONS.length} extra-secret clues — somewhere in that area, not
+        marked exactly. That&apos;s the hint! Since it&apos;s a there-and-back course,
         you&apos;ll pass every pin twice — a good chance to mop up anything missed on
         the way out.
       </Typography>
@@ -33,25 +33,25 @@ export default function MapPage() {
           border: "1px solid #ccc",
         }}
       >
-        {GOLD_STATIONS.map((station) => (
+        {SECRET_STATIONS.map((station) => (
           <Box
             key={station.id}
             sx={{
               position: "absolute",
               left: `${station.map.x}%`,
               top: `${station.map.y}%`,
-              width: `${station.map.radius * 2}%`,
-              height: `${station.map.radius * 2}%`,
+              width: `${(station.map.radius ?? 8) * 2}%`,
+              height: `${(station.map.radius ?? 8) * 2}%`,
               transform: "translate(-50%, -50%)",
               borderRadius: "50%",
-              bgcolor: GOLD_COLOR[station.id],
+              bgcolor: CLUE_COLORS.secret,
               opacity: 0.35,
             }}
           />
         ))}
 
-        {HORSE_STATIONS.map((station) => (
-          <Tooltip key={station.id} title={station.horseName}>
+        {MAIN_STATIONS.map((station) => (
+          <Tooltip key={station.id} title={`Clue #${station.id}`}>
             <Box
               sx={{
                 position: "absolute",
@@ -61,7 +61,7 @@ export default function MapPage() {
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                bgcolor: HORSE_COLORS[station.id],
+                bgcolor: CLUE_COLORS.main,
                 border: "2px solid white",
                 boxShadow: 2,
               }}

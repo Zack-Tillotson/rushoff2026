@@ -10,18 +10,18 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Grow from "@mui/material/Grow";
 import { useFamily } from "@/lib/hooks/useFamily";
-import { randomWord, findWord, randomGoldItem, findGoldItem } from "@/data/adlib";
 import type { Station } from "@/data/stations";
-import { HORSE_COLORS, GOLD_COLOR } from "@/theme";
+import { CLUE_COLORS } from "@/theme";
 import WantedPosterCard from "@/app/WantedPosterCard";
 import BackToHomeLink from "@/app/BackToHomeLink";
 
-// Reveal copy is deliberately horse-taming / treasure-hunting only — never mentions a
-// "story" or "blank." The ad-lib nature is a twist held back until /finish.
+// No random reveal, no words, no items — a clue is just found or not found. Copy
+// matches docs/clue-copy.md exactly.
 export default function StationCatch({ station }: { station: Station }) {
   const router = useRouter();
   const { uid, family } = useFamily();
-  const [catching, setCatching] = useState(false);
+  const [marking, setMarking] = useState(false);
+  const [justFound, setJustFound] = useState(false);
 
   useEffect(() => {
     if (family === null) router.replace(`/start?returnTo=/station/${station.id}`);
@@ -38,83 +38,59 @@ export default function StationCatch({ station }: { station: Station }) {
     );
   }
 
-  const existingCatch = family.catches?.[station.id];
+  const alreadyFound = Boolean(family.catches?.[station.id]);
+  const accentColor = station.kind === "main" ? CLUE_COLORS.main : CLUE_COLORS.secret;
 
   const handleFind = async () => {
     if (!uid) return;
-    setCatching(true);
-    const found =
-      station.kind === "horse" ? randomWord(station.id) : randomGoldItem(station.id);
+    setMarking(true);
     await set(ref(getDb(), `families/${uid}/catches/${station.id}`), {
-      foundId: found.id,
       caughtAt: Date.now(),
     });
-    setCatching(false);
+    setJustFound(true);
+    setMarking(false);
   };
-
-  const foundEntry = existingCatch
-    ? station.kind === "horse"
-      ? findWord(station.id, existingCatch.foundId)
-      : findGoldItem(station.id, existingCatch.foundId)
-    : null;
-
-  const accentColor = station.kind === "horse" ? HORSE_COLORS[station.id] : GOLD_COLOR[station.id];
 
   return (
     <>
       <BackToHomeLink />
       <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
-        {station.kind === "horse" ? (
-          <>
-            <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
-              Wild Horse
-            </Typography>
-            <Typography variant="h4" gutterBottom>
-              {station.horseName}
-            </Typography>
-          </>
-        ) : (
-          <>
-            <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
-              Hidden Gold Cache
-            </Typography>
-            <Typography variant="h4" gutterBottom>
-              You found something!
-            </Typography>
-          </>
-        )}
+        <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
+          {station.kind === "main" ? "Gang Clue" : "Extra-Secret Clue"}
+        </Typography>
+        <Typography variant="h4" gutterBottom>
+          Clue #{station.id}
+        </Typography>
 
-        {foundEntry ? (
+        {alreadyFound ? (
           <Grow in>
             <Box sx={{ mt: 2 }}>
               <WantedPosterCard accentColor={accentColor}>
-                {station.kind === "horse" ? (
-                  <>
-                    <Typography variant="h5">
-                      {station.horseName}&apos;s secret command word:
-                    </Typography>
-                    <Typography variant="h3" sx={{ mt: 1 }}>
-                      &ldquo;{foundEntry.word}&rdquo;
-                    </Typography>
-                  </>
+                {justFound ? (
+                  <Typography variant="h5">
+                    {station.kind === "main"
+                      ? `You found Clue #${station.id}! One step closer to the gang.`
+                      : "You found a secret clue! Extra credit for a future outlaw."}
+                  </Typography>
                 ) : (
-                  <Typography variant="h5">You found: {foundEntry.word}</Typography>
+                  <Typography variant="h5">
+                    {station.kind === "main"
+                      ? `Clue #${station.id} — already found!`
+                      : "Secret clue already found — nice work!"}
+                  </Typography>
                 )}
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Already found here!
-                </Typography>
               </WantedPosterCard>
             </Box>
           </Grow>
         ) : (
           <Box sx={{ mt: 3 }}>
             <Typography variant="body1" sx={{ mb: 3 }}>
-              {station.kind === "horse"
-                ? `You found ${station.horseName}! Tap below to learn its secret command word.`
-                : "Tap below to see what's inside the cache."}
+              {station.kind === "main"
+                ? "Tap below to mark this clue found."
+                : "You found an extra-secret clue! Tap below for bonus credit."}
             </Typography>
-            <Button variant="contained" size="large" onClick={handleFind} disabled={catching}>
-              {catching ? "..." : station.kind === "horse" ? "Tame the Horse!" : "Open the Cache!"}
+            <Button variant="contained" size="large" onClick={handleFind} disabled={marking}>
+              {marking ? "..." : "Found It!"}
             </Button>
           </Box>
         )}

@@ -10,12 +10,10 @@ import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useFamily } from "@/lib/hooks/useFamily";
-import { STATIONS } from "@/data/stations";
-import { findWord, findGoldItem } from "@/data/adlib";
-import { HORSE_COLORS, GOLD_COLOR } from "@/theme";
+import { STATIONS, MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
+import { CLUE_COLORS } from "@/theme";
 
-// Framed the same way as the stations themselves — a found-so-far list, never
-// mentioning "story" or "blank." The ad-lib nature stays a secret until /finish.
+// Simple found-so-far list — no story/word language, since there's no story anymore.
 export default function CollectionPage() {
   const router = useRouter();
   const { family } = useFamily();
@@ -32,18 +30,25 @@ export default function CollectionPage() {
     );
   }
 
-  const foundCount = STATIONS.filter((s) => family.catches?.[s.id]).length;
+  const mainFound = MAIN_STATIONS.filter((s) => family.catches?.[s.id]).length;
+  const secretFound = SECRET_STATIONS.filter((s) => family.catches?.[s.id]).length;
+  const allMainFound = mainFound === MAIN_STATIONS.length;
 
   return (
     <Box sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
       <Typography variant="h4" gutterBottom>
-        Your Finds
+        Your Clues
       </Typography>
       <Typography variant="body1" sx={{ mb: 1 }}>
-        {foundCount} / {STATIONS.length} found so far. Once you've found all 5 wild
-        horses, head to the finish line for a big surprise!
+        {mainFound}/{MAIN_STATIONS.length} clues found &mdash; {secretFound}/
+        {SECRET_STATIONS.length} extra-secret clues found.
       </Typography>
-      {foundCount < STATIONS.length && (
+      <Typography variant="body1" sx={{ mb: 1 }}>
+        {allMainFound
+          ? "You've proven your worth! Head to the finish line to join the gang."
+          : "Find all 5 clues to prove your worth to the gang."}
+      </Typography>
+      {!allMainFound && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           This is a there-and-back course, so you'll pass every spot twice — anything
           still marked &ldquo;not found yet&rdquo; below is worth a second look on
@@ -53,15 +58,9 @@ export default function CollectionPage() {
 
       <Grid container spacing={2}>
         {STATIONS.map((station) => {
-          const caught = family.catches?.[station.id];
-          const found = caught
-            ? station.kind === "horse"
-              ? findWord(station.id, caught.foundId)
-              : findGoldItem(station.id, caught.foundId)
-            : null;
-          const accentColor =
-            station.kind === "horse" ? HORSE_COLORS[station.id] : GOLD_COLOR[station.id];
-          const label = station.kind === "horse" ? station.horseName : "Gold Cache";
+          const found = Boolean(family.catches?.[station.id]);
+          const accentColor = station.kind === "main" ? CLUE_COLORS.main : CLUE_COLORS.secret;
+          const label = station.kind === "main" ? `Clue #${station.id}` : "Secret Clue";
 
           return (
             <Grid key={station.id} size={{ xs: 6, sm: 4 }}>
@@ -83,7 +82,7 @@ export default function CollectionPage() {
                     sx={{ bgcolor: accentColor, color: "white", mb: 1 }}
                   />
                   <Typography variant="body2">
-                    {found ? found.word : "Not found yet"}
+                    {found ? "Found!" : "Not found yet"}
                   </Typography>
                 </CardContent>
               </Card>

@@ -7,19 +7,15 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import Grow from "@mui/material/Grow";
-import Divider from "@mui/material/Divider";
 import { getDb } from "@/lib/firebase";
 import { useFamily } from "@/lib/hooks/useFamily";
-import { STORY_TEMPLATE, CATCHPHRASE, BLANK_DEFAULTS, findWord } from "@/data/adlib";
-import type { BlankType } from "@/data/adlib";
+import { MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
 import WantedPosterCard from "@/app/WantedPosterCard";
 import BackToHomeLink from "@/app/BackToHomeLink";
 
-const BLANK_TYPES: BlankType[] = ["adjective", "pluralnoun", "verb", "sound", "number"];
-
-// Finish QR lands here. First visit reveals the twist (this was an ad-lib all along)
-// and sets finishedAt; re-visits just re-show the same reveal — idempotent, grants no
-// new word, and is unrelated to gold-cache finds. See architecture.md's Pages/Routes.
+// Finish QR lands here. First visit sets finishedAt and welcomes the family into the
+// gang; re-visits just re-show the same welcome — idempotent, grants no new find.
+// No story, no twist — just a celebration. See docs/clue-copy.md for exact copy.
 export default function FinishPage() {
   const router = useRouter();
   const { uid, family } = useFamily();
@@ -48,42 +44,29 @@ export default function FinishPage() {
     );
   }
 
-  const blanks = BLANK_TYPES.reduce(
-    (acc, blankType) => {
-      const caught = family.catches?.[blankType];
-      const word = caught ? findWord(blankType, caught.foundId)?.word : undefined;
-      acc[blankType] = word ?? BLANK_DEFAULTS[blankType];
-      return acc;
-    },
-    {} as Record<BlankType, string>
-  );
+  const mainCount = MAIN_STATIONS.filter((s) => family.catches?.[s.id]).length;
+  const secretCount = SECRET_STATIONS.filter((s) => family.catches?.[s.id]).length;
 
   return (
     <>
       <BackToHomeLink />
       <Box sx={{ p: 3, maxWidth: 560, mx: "auto", textAlign: "center" }}>
-        <Typography variant="overline" sx={{ fontWeight: 700 }}>
-          The Truth Revealed
-        </Typography>
-        <Typography variant="h4" gutterBottom>
-          You've been telling a legend all along...
-        </Typography>
-
         <Grow in>
           <Box sx={{ mt: 3 }}>
             <WantedPosterCard>
-              <Typography variant="body1" sx={{ fontSize: "1.15rem", lineHeight: 1.8 }}>
-                {STORY_TEMPLATE(blanks)}
+              <Typography variant="h3" gutterBottom>
+                Welcome to the gang!
               </Typography>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h4">"{CATCHPHRASE}"</Typography>
+              <Typography variant="h5" sx={{ mt: 2 }}>
+                You found {mainCount}/{MAIN_STATIONS.length} clues and {secretCount}/
+                {SECRET_STATIONS.length} extra-secret clues.
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 2 }}>
+                The gang&apos;s impressed either way — grab your horse and rush off!
+              </Typography>
             </WantedPosterCard>
           </Box>
         </Grow>
-
-        <Typography variant="body1" sx={{ mt: 4 }}>
-          Now grab your hobby-horse and gallop to the finish — yell it loud!
-        </Typography>
       </Box>
     </>
   );

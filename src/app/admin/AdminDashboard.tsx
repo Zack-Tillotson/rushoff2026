@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ref, set } from "firebase/database";
+import { ref, set, remove } from "firebase/database";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -22,7 +22,6 @@ import { getDb } from "@/lib/firebase";
 import { useRaceClock, useElapsedMs } from "@/lib/hooks/useRaceClock";
 import { useAllFamilies } from "@/lib/hooks/useAllFamilies";
 import { STATIONS } from "@/data/stations";
-import { WORD_POOLS, GOLD_CACHE_POOLS, findWord, findGoldItem } from "@/data/adlib";
 import { getAvatar } from "@/data/avatars";
 import AdminQrCodes from "./AdminQrCodes";
 
@@ -33,7 +32,6 @@ export default function AdminDashboard() {
 
   const [familyId, setFamilyId] = useState("");
   const [stationId, setStationId] = useState(STATIONS[0].id);
-  const [foundId, setFoundId] = useState("");
   const [finishFamilyId, setFinishFamilyId] = useState("");
 
   const startClock = () =>
@@ -47,17 +45,20 @@ export default function AdminDashboard() {
   const resetClock = () =>
     set(ref(getDb(), "race/clock"), { status: "idle", startedAt: null, stoppedAt: null });
 
-  const station = STATIONS.find((s) => s.id === stationId)!;
-  const foundOptions = station.kind === "horse" ? WORD_POOLS[station.id] : GOLD_CACHE_POOLS[station.id];
+  const selectedFamily = families.find((f) => f.id === familyId);
+  const isFoundForSelected = Boolean(selectedFamily?.catches?.[stationId]);
 
-  const submitManualCatch = async () => {
-    if (!familyId || !foundId) return;
+  const markFound = async () => {
+    if (!familyId) return;
     await set(ref(getDb(), `families/${familyId}/catches/${stationId}`), {
-      foundId,
       caughtAt: Date.now(),
       manual: true,
     });
-    setFoundId("");
+  };
+
+  const markUnfound = async () => {
+    if (!familyId) return;
+    await remove(ref(getDb(), `families/${familyId}/catches/${stationId}`));
   };
 
   const submitManualFinish = async () => {
@@ -103,7 +104,7 @@ export default function AdminDashboard() {
               <TableCell>Family</TableCell>
               {STATIONS.map((s) => (
                 <TableCell key={s.id} align="center">
-                  {s.kind === "horse" ? s.horseName : "Gold"}
+                  {s.kind === "main" ? `#${s.id}` : `Secret #${s.id}`}
                 </TableCell>
               ))}
               <TableCell align="center">Finished</TableCell>
@@ -117,14 +118,9 @@ export default function AdminDashboard() {
                 </TableCell>
                 {STATIONS.map((s) => {
                   const caught = family.catches?.[s.id];
-                  const found = caught
-                    ? s.kind === "horse"
-                      ? findWord(s.id, caught.foundId)
-                      : findGoldItem(s.id, caught.foundId)
-                    : null;
                   return (
                     <TableCell key={s.id} align="center">
-                      {found ? (caught?.manual ? `${found.word} *` : found.word) : "—"}
+                      {caught ? (caught.manual ? "✅*" : "✅") : "—"}
                     </TableCell>
                   );
                 })}
@@ -141,7 +137,7 @@ export default function AdminDashboard() {
       <Divider sx={{ my: 4 }} />
 
       <Typography variant="h6" gutterBottom>
-        Manually Add/Correct a Find
+        Manually Mark a Clue Found/Unfound
       </Typography>
       <Stack spacing={2} sx={{ maxWidth: 360, mb: 4 }}>
         <FormControl fullWidth size="small">
@@ -160,41 +156,37 @@ export default function AdminDashboard() {
         </FormControl>
 
         <FormControl fullWidth size="small">
-          <InputLabel>Station</InputLabel>
+          <InputLabel>Clue</InputLabel>
           <Select
-            label="Station"
+            label="Clue"
             value={stationId}
-            onChange={(e) => {
-              setStationId(e.target.value);
-              setFoundId("");
-            }}
+            onChange={(e) => setStationId(e.target.value)}
           >
             {STATIONS.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.kind === "horse" ? s.horseName : "Gold Cache"}
+                {s.kind === "main" ? `Clue #${s.id}` : `Secret Clue #${s.id}`}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <FormControl fullWidth size="small">
-          <InputLabel>{station.kind === "horse" ? "Word" : "Item"}</InputLabel>
-          <Select
-            label={station.kind === "horse" ? "Word" : "Item"}
-            value={foundId}
-            onChange={(e) => setFoundId(e.target.value)}
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            onClick={markFound}
+            disabled={!familyId || isFoundForSelected}
           >
-            {foundOptions.map((w) => (
-              <MenuItem key={w.id} value={w.id}>
-                {w.word}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Button variant="contained" onClick={submitManualCatch} disabled={!familyId || !foundId}>
-          Save Find
-        </Button>
+            Mark Found
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={markUnfound}
+            disabled={!familyId || !isFoundForSelected}
+          >
+            Mark Unfound
+          </Button>
+        </Stack>
       </Stack>
 
       <Typography variant="h6" gutterBottom>

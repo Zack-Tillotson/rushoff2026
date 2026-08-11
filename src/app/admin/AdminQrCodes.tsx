@@ -24,7 +24,7 @@ export default function AdminQrCodes() {
   const routes = [
     { label: "Start", path: "/start" },
     ...STATIONS.map((s) => ({
-      label: s.kind === "horse" ? s.horseName : "Gold Cache",
+      label: s.kind === "main" ? `Clue #${s.id}` : `Secret Clue #${s.id}`,
       path: `/station/${s.id}`,
     })),
     { label: "Finish", path: "/finish" },

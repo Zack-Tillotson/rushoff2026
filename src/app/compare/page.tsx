@@ -9,10 +9,8 @@ import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import Paper from "@mui/material/Paper";
-import Tooltip from "@mui/material/Tooltip";
 import { useAllFamilies } from "@/lib/hooks/useAllFamilies";
 import { STATIONS } from "@/data/stations";
-import { findWord, findGoldItem } from "@/data/adlib";
 import { getAvatar } from "@/data/avatars";
 
 export default function ComparePage() {
@@ -36,7 +34,7 @@ export default function ComparePage() {
                 <TableCell>Family</TableCell>
                 {STATIONS.map((s) => (
                   <TableCell key={s.id} align="center">
-                    {s.kind === "horse" ? s.horseName : "Gold"}
+                    {s.kind === "main" ? `#${s.id}` : `Secret #${s.id}`}
                   </TableCell>
                 ))}
                 <TableCell align="center">Total</TableCell>
@@ -50,25 +48,11 @@ export default function ComparePage() {
                     <TableCell>
                       {getAvatar(family.avatarId)?.emoji} {family.name}
                     </TableCell>
-                    {STATIONS.map((station) => {
-                      const caught = family.catches?.[station.id];
-                      const found = caught
-                        ? station.kind === "horse"
-                          ? findWord(station.id, caught.foundId)
-                          : findGoldItem(station.id, caught.foundId)
-                        : null;
-                      return (
-                        <TableCell key={station.id} align="center">
-                          {found ? (
-                            <Tooltip title={found.word}>
-                              <span>✅</span>
-                            </Tooltip>
-                          ) : (
-                            "—"
-                          )}
-                        </TableCell>
-                      );
-                    })}
+                    {STATIONS.map((station) => (
+                      <TableCell key={station.id} align="center">
+                        {family.catches?.[station.id] ? "✅" : "—"}
+                      </TableCell>
+                    ))}
                     <TableCell align="center">
                       {total} / {STATIONS.length}
                     </TableCell>

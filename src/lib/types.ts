@@ -1,5 +1,4 @@
 export interface Catch {
-  foundId: string;
   caughtAt: number;
   manual?: boolean;
 }
