@@ -40,7 +40,6 @@ export default function FinishPage() {
   if (uid === null || family === undefined || family === null) {
     return (
       <>
-        <BackToHomeLink />
         <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
           <CircularProgress />
         </Box>
@@ -56,7 +55,6 @@ export default function FinishPage() {
 
   return (
     <>
-      <BackToHomeLink />
       <Box sx={{ p: 3, maxWidth: 560, mx: "auto", textAlign: "center" }}>
         <Grow in>
           <Box sx={{ mt: 3 }}>

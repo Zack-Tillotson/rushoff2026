@@ -32,7 +32,8 @@ export default function MapPage() {
             width: "100%",
             display: "block",
             borderRadius: 2,
-            border: "1px solid #ccc",
+            border: "1px solid",
+            borderColor: "divider",
           }}
         />
       </Box>

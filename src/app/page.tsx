@@ -11,7 +11,6 @@ import { useFamily } from "@/lib/hooks/useFamily";
 import { useRaceClock, useElapsedMs } from "@/lib/hooks/useRaceClock";
 import { formatElapsed } from "@/lib/formatElapsed";
 import { MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
-import { getAvatar } from "@/data/avatars";
 
 export default function HomePage() {
   const router = useRouter();
@@ -37,8 +36,14 @@ export default function HomePage() {
 
   return (
     <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
+      <Box
+        component="img"
+        src="/horse-mascot-purple-circle.png"
+        alt="Rush Off 5k logo"
+        sx={{ width: 250, height: 250, objectFit: "contain", mb: 1 }}
+      />
       <Typography variant="h4" gutterBottom>
-        🤠 Rush Off 5k
+        Rush Off 5k
       </Typography>
 
       <Card sx={{ mb: 3 }}>
@@ -65,7 +70,7 @@ export default function HomePage() {
         <Card>
           <CardContent>
             <Typography variant="h5">
-              {getAvatar(family.avatarId)?.emoji} {family.name}
+              {family.name}
             </Typography>
             <Typography variant="body1" sx={{ mt: 1 }}>
               {mainFound}/{MAIN_STATIONS.length} clues found

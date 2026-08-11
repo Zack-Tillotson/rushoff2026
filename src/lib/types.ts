@@ -5,7 +5,6 @@ export interface Catch {
 
 export interface Family {
   name: string;
-  avatarId: string;
   createdAt: number;
   finishedAt?: number | null;
   catches?: Record<string, Catch>;

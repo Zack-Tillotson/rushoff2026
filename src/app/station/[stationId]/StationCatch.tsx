@@ -43,7 +43,6 @@ export default function StationCatch({ station }: { station: Station }) {
   if (uid === null || family === undefined || family === null || wasAlreadyFound === null) {
     return (
       <>
-        <BackToHomeLink />
         <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
           <CircularProgress />
         </Box>
@@ -55,7 +54,6 @@ export default function StationCatch({ station }: { station: Station }) {
 
   return (
     <>
-      <BackToHomeLink />
       <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
         <Typography variant="overline" sx={{ color: accentColor, fontWeight: 700 }}>
           {station.kind === "main" ? "Gang Clue" : "Extra-Secret Clue"}

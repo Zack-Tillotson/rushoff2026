@@ -7,8 +7,21 @@ import { createTheme } from "@mui/material/styles";
 export const theme = createTheme({
   palette: {
     mode: "light",
-    primary: { main: "#1565c0" },
-    background: { default: "#f0f2f5" },
+    primary: {
+      main: "#9b74bb",
+      light: "#b89ad1",
+      dark: "#7a569b",
+      contrastText: "#120a1f",
+    },
+    secondary: {
+      main: "#6b4a92",
+      light: "#8f70b5",
+      dark: "#4f3570",
+    },
+    background: {
+      default: "#f5f0fa",
+      paper: "#ffffff",
+    },
   },
   typography: {
     h1: { fontFamily: "var(--font-rye), serif" },
@@ -23,16 +36,16 @@ export const theme = createTheme({
 // Simplified from iteration 2: no more per-horse-named palette (clues don't have
 // individual identities anymore) — just two accent colors, one per clue kind.
 export const CLUE_COLORS = {
-  main: "#c2612a", // dusty orange
-  secret: "#a67c1e", // antique gold
+  main: "#8a63b0", // mascot purple accent
+  secret: "#6b4a92", // deeper purple for secret clues
 } as const;
 
 // Shared "wanted poster" treatment for the highest-emotion moments (clue found,
 // finish welcome) — parchment background + rope-inspired border, so both read as one
 // system. See WantedPosterCard.tsx.
 export const WANTED_POSTER_SX = {
-  bgcolor: "#f4e8d0",
-  border: "4px double #5a4127",
+  bgcolor: "#fbf8ff",
+  border: "4px double #7a569b",
   borderRadius: 2,
-  boxShadow: 3,
+  boxShadow: "0 8px 20px rgba(122, 86, 155, 0.25)",
 };

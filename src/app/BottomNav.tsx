@@ -15,20 +15,21 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 const TABS = [
   { label: "Home", value: "/", icon: <HomeIcon /> },
   { label: "Map", value: "/map", icon: <MapIcon /> },
-  { label: "Collection", value: "/collection", icon: <WorkspacePremiumIcon /> },
+  { label: "Progress", value: "/collection", icon: <WorkspacePremiumIcon /> },
 ];
-
-// Not shown on /start, /station/*, /finish, or /admin — those are single-purpose
-// flows, not part of the everyday family navigation.
-const HIDDEN_ON = ["/start", "/station", "/finish", "/admin"];
 
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  if (HIDDEN_ON.some((prefix) => pathname.startsWith(prefix))) {
+  if (pathname.startsWith("/station-codes")) {
     return null;
   }
+
+  const activeTab =
+    TABS.find((tab) =>
+      tab.value === "/" ? pathname === "/" : pathname.startsWith(tab.value),
+    )?.value ?? false;
 
   return (
     <Paper
@@ -37,7 +38,7 @@ export default function BottomNav() {
     >
       <BottomNavigation
         showLabels
-        value={pathname}
+        value={activeTab}
         onChange={(_, newValue) => router.push(newValue)}
       >
         {TABS.map((tab) => (

@@ -1,4 +1,4 @@
-# Rush Off 5k — Clue Copy & Avatars
+# Rush Off 5k — Clue Copy
 
 Replaces iteration 2's ad-lib story/word-pool doc — this redesign has no story, no
 words, no random reveals. A clue is just found or not found. This doc is just the
@@ -44,14 +44,6 @@ re-scanning shows the same thing, doesn't reset anything):
 - Every participant gets exactly one hobby-horse, unconditionally — not tied to the
   clue count at all (that's a physical headcount decision, not something the app
   tracks — see `requirements.md`).
-
-## Generic Family Avatars
-Unchanged — non-theme emoji/icon avatars, represents *who the family is*, distinct from
-what they've found:
-
-🏃 Runner, 🏃‍♀️ Runner, 🦊 Fox, 🐻 Bear, 🐰 Rabbit, ⭐ Star, 🔥 Flame, ⚡ Bolt
-
-Custom per-family avatars (photos) remain a deferred follow-up per `requirements.md`.
 
 ## Brand Asset
 `public/horse-mascot-purple.png` — the actual event's official logo (rope-circle badge,

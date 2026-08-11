@@ -50,7 +50,7 @@ Kids do the physical finding; parents do the scanning/tapping.
   scanner. Must work on mainstream iOS Safari and Android Chrome.
 - **Data store**: Firebase **Realtime Database** as the single shared/central store for:
   - the race clock's state (start timestamp, running/stopped/reset),
-  - family records (name, avatar, and which clues have been found),
+  - family records (name and which clues have been found),
   - so every family's phone and the admin view stay live-synced with the same shared
     state, with no page refresh needed (this is what makes a *shared* race clock and
     live admin monitoring possible).
@@ -82,12 +82,8 @@ Kids do the physical finding; parents do the scanning/tapping.
 ### Start flow / team identification
 - Scanning the shared **start QR code** (posted at the start line) begins a family's
   session and starts tracking their progress — no manual team name typing required to
-  *start*, but immediately after scanning, the family enters a **name** and picks a
-  **picture/avatar** to represent them for the rest of the site (collection view, map).
+  *start*, but immediately after scanning, the family enters a **name**.
   This creates their record in the Realtime Database.
-- Avatar picture set: for v1, a handful of **generic/default avatars** only (generated
-  as part of this build). Custom per-family avatars are a follow-up, added later once
-  supplied.
 
 ### Clue stations: 5 main + 2 extra-secret
 - **5 main clues** along the course, simply numbered **1 through 5**. Finding all 5 is

@@ -38,7 +38,6 @@ shared state.
 /families
   /{familyId}
     name: string
-    avatarId: string
     createdAt: <server timestamp>
     finishedAt: <server timestamp | null>   # set when the finish QR is scanned
     catches:
@@ -69,7 +68,7 @@ identity in the browser itself (its own local storage), so a returning visit on 
 device/browser keeps the same uid automatically — no custom `localStorage` bookkeeping or
 family-id plumbing needed. `/start` simply checks whether `/families/{auth.currentUser.uid}`
 already exists: if yes, the device is recognized and skips straight through; if no
-(first visit, or a genuinely new browser/device), it shows the name+avatar form and
+(first visit, or a genuinely new browser/device), it shows the name form and
 creates the record at that uid. A brand-new anonymous uid (e.g. a truly different device)
 has no path back to an old family's data — that's an accepted limitation given the event
 is same-day/same-device in practice, not a cross-device account system.
@@ -79,14 +78,14 @@ Unlike iteration 2 (which needed a story template + word pools transcribed into
 `src/data/adlib.ts`), this redesign has **no variable content per clue at all** — finding
 a clue just flips a found/not-found flag. There's nothing to source, generate, write, or
 license. `src/data/adlib.ts` is deleted; the only static config left is the clue list
-itself (`stations.ts`) and the generic avatar set (`avatars.ts`).
+itself (`stations.ts`).
 
 ## Pages / Routes (App Router)
 
 | Route | Purpose |
 |---|---|
-| `/` | Home: shows the shared race clock **only once it's running/stopped** — before the organizer starts it, shows a simple "hasn't started yet" message instead of a "0:00". Also shows this family's status (name/avatar, X/5 main + Y/2 secret found) and nav into the rest. |
-| `/start` | Start QR lands here. Signs in anonymously if not already, then checks `/families/{uid}`: if it exists, redirect straight to `/`; if not, show the name+avatar form and create the record at that uid. |
+| `/` | Home: shows the shared race clock **only once it's running/stopped** — before the organizer starts it, shows a simple "hasn't started yet" message instead of a "0:00". Also shows this family's status (name, X/5 main + Y/2 secret found) and nav into the rest. |
+| `/start` | Start QR lands here. Signs in anonymously if not already, then checks `/families/{uid}`: if it exists, redirect straight to `/`; if not, show the name form and create the record at that uid. |
 | `/station/[stationId]` | Clue QR lands here. `stationId` is one of `'1'`–`'7'` (main clues `1`–`5`, extra-secret clues `6`–`7`) — pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. **No button** — visiting the page is enough: a `useEffect` writes `catches/{id}` (just a timestamp) automatically on first load if not already found, then shows the celebratory confirmation. Idempotent — a repeat visit skips the write and shows "already found" copy instead of the celebratory copy (see Auto-Record on Visit below for how it tells the two apart). |
 | `/collection` | This family's found-so-far list across all 7 clues, with separate main (X/5) and extra-secret (Y/2) counts — no story/word language, since there's no story anymore. |
 | `/map` | Shows `course-map.png` as-is — no pins, no overlays, no per-clue positioning. Tapping it opens the raw image in a new tab so the phone's native image viewer handles pinch-zoom. |
@@ -188,7 +187,7 @@ card revealing a hidden category exists:
 `/admin`'s family list is a **stack of cards, one per family** — not a table. A
 horizontal table with a column per clue (7 clues + name + finished = 9 columns) doesn't
 fit a phone screen without horizontal scrolling, which is exactly the failure mode this
-avoids. Each card has the family's name/avatar and a Finished/Racing chip up top, then a
+avoids. Each card has the family's name and a Finished/Racing chip up top, then a
 wrapped row of `Chip`s — one per clue, filled+colored if found (with a trailing `*` if
 manually corrected) or outlined if not — so the full 7-clue status is always visible at
 a glance with no scrolling in either direction, at the cost of being less scannable as
@@ -284,8 +283,7 @@ component (unchanged from iteration 2) rather than hand-styling each page.
   texture elsewhere in the app.
 
 ### Key MUI components
-`AppBar`, `BottomNavigation`, `Card` (finish welcome, themed per above), `Avatar`
-(family avatar, rope-framed), `LinearProgress` (main-clue completion), `Chip` (admin
+`AppBar`, `BottomNavigation`, `Card` (finish welcome, themed per above), `LinearProgress` (main-clue completion), `Chip` (admin
 family-list clue status, per Admin Family List above), `Snackbar` (toasts, e.g. "clue
 marked found"). No `Table` anywhere in the app now that `/compare` is gone — admin uses
 cards instead (see Admin Family List above).
@@ -325,7 +323,6 @@ src/
     layout.tsx                    # MUI ThemeProvider, CssBaseline, BottomNavigation
   data/
     stations.ts                   # 7 clues: id ('1'-'7'), kind ('main'|'secret') — no map-position data
-    avatars.ts                    # generic avatar set
   lib/
     firebase.ts                   # Firebase app/RTDB/Auth init
     finishTime.ts                 # getFinishTimeMs() — negative-time-safe, used by /finish only

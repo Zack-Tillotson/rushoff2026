@@ -6,9 +6,15 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Divider from "@mui/material/Divider";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { useFamily } from "@/lib/hooks/useFamily";
 import { MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
 import { CLUE_COLORS } from "@/theme";
@@ -40,7 +46,10 @@ export default function CollectionPage() {
   return (
     <Box sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
       <Typography variant="h4" gutterBottom>
-        Your Clues
+        Outlaw Progress
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        This is your progress toward proving you have what it takes to join the gang.
       </Typography>
       <Typography variant="body1" sx={{ mb: 1 }}>
         {mainFound}/{MAIN_STATIONS.length} clues found
@@ -48,16 +57,9 @@ export default function CollectionPage() {
           ` — ${secretFound}/${SECRET_STATIONS.length} extra-secret clues found`}
         .
       </Typography>
-      <Typography variant="body1" sx={{ mb: 1 }}>
-        {allMainFound
-          ? "You've proven your worth! Head to the finish line to join the gang."
-          : "Find all 5 clues to prove your worth to the gang."}
-      </Typography>
-      {!allMainFound && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          This is a there-and-back course, so you'll pass every spot twice — anything
-          still marked &ldquo;not found yet&rdquo; below is worth a second look on
-          your way back.
+      {allMainFound && (
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          You&apos;ve proven your worth! Head to the finish line to join the gang.
         </Typography>
       )}
 
@@ -81,14 +83,28 @@ export default function CollectionPage() {
                   <Typography variant="h4">{found ? "✓" : "?"}</Typography>
                 </Box>
                 <CardContent sx={{ pt: 0 }}>
-                  <Chip
-                    size="small"
-                    label={label}
-                    sx={{ bgcolor: accentColor, color: "white", mb: 1 }}
-                  />
-                  <Typography variant="body2">
-                    {found ? "Found!" : "Not found yet"}
-                  </Typography>
+                  <List dense disablePadding>
+                    <ListItem disablePadding>
+                      <ListItemIcon sx={{ minWidth: 30 }}>
+                        {found ? (
+                          <CheckCircleIcon sx={{ color: accentColor, fontSize: 18 }} />
+                        ) : (
+                          <RadioButtonUncheckedIcon
+                            sx={{ color: "text.disabled", fontSize: 18 }}
+                          />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Typography variant="subtitle2" sx={{ color: accentColor, fontWeight: 700 }}>
+                            {label}
+                          </Typography>
+                        }
+                        secondary={<Typography variant="body2">{found ? "Found" : "Not found yet"}</Typography>}
+                      />
+                    </ListItem>
+                  </List>
+                  <Divider sx={{ mt: 1 }} />
                 </CardContent>
               </Card>
             </Grid>

@@ -9,16 +9,21 @@ import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Chip from "@mui/material/Chip";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { getDb } from "@/lib/firebase";
 import { useRaceClock, useElapsedMs } from "@/lib/hooks/useRaceClock";
 import { useAllFamilies } from "@/lib/hooks/useAllFamilies";
 import { STATIONS } from "@/data/stations";
-import { getAvatar } from "@/data/avatars";
+import { formatElapsed } from "@/lib/formatElapsed";
 import AdminQrCodes from "./AdminQrCodes";
 
 export default function AdminDashboard() {
@@ -63,6 +68,12 @@ export default function AdminDashboard() {
     setFinishFamilyId("");
   };
 
+  const getEventElapsedLabel = (eventAt: number | null | undefined): string => {
+    if (!eventAt || !clock.startedAt) return "-";
+    const elapsedMs = eventAt - clock.startedAt;
+    return elapsedMs >= 0 ? formatElapsed(elapsedMs) : "-";
+  };
+
   return (
     <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
       <Typography variant="h4" gutterBottom>
@@ -93,6 +104,9 @@ export default function AdminDashboard() {
       <Typography variant="h6" gutterBottom>
         Families ({families.length})
       </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+        Right column shows race time (elapsed from clock start).
+      </Typography>
       <Stack spacing={2} sx={{ mb: 2 }}>
         {families.map((family) => (
           <Card key={family.id} variant="outlined">
@@ -102,30 +116,71 @@ export default function AdminDashboard() {
                 sx={{ mb: 1.5, justifyContent: "space-between", alignItems: "center" }}
               >
                 <Typography variant="h6">
-                  {getAvatar(family.avatarId)?.emoji} {family.name}
+                  {family.name}
                 </Typography>
-                <Chip
-                  size="small"
-                  label={family.finishedAt ? "Finished" : "Racing"}
-                  color={family.finishedAt ? "success" : "default"}
-                  variant={family.finishedAt ? "filled" : "outlined"}
-                />
+                <Typography
+                  variant="body2"
+                  sx={{ color: family.finishedAt ? "success.main" : "text.secondary", fontWeight: 700 }}
+                >
+                  {family.finishedAt ? "Finished" : "Racing"}
+                </Typography>
               </Stack>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+              <List dense disablePadding>
                 {STATIONS.map((s) => {
                   const caught = family.catches?.[s.id];
-                  const label = s.kind === "main" ? `#${s.id}` : `Secret #${s.id}`;
+                  const label = s.kind === "main" ? `Clue #${s.id}` : `Secret clue #${s.id}`;
+                  const labelWithManual = caught?.manual ? `${label} *` : label;
                   return (
-                    <Chip
+                    <ListItem
                       key={s.id}
-                      size="small"
-                      label={caught ? (caught.manual ? `${label} ✓*` : `${label} ✓`) : label}
-                      color={caught ? "primary" : "default"}
-                      variant={caught ? "filled" : "outlined"}
-                    />
+                      disablePadding
+                      secondaryAction={
+                        <Typography
+                          variant="caption"
+                          color={caught ? "primary.main" : "text.secondary"}
+                          sx={{ fontWeight: caught ? 700 : 500, fontFamily: "monospace" }}
+                        >
+                          {getEventElapsedLabel(caught?.caughtAt)}
+                        </Typography>
+                      }
+                    >
+                      <ListItemIcon sx={{ minWidth: 30 }}>
+                        {caught ? (
+                          <CheckCircleIcon color="primary" fontSize="small" />
+                        ) : (
+                          <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography variant="body2">{labelWithManual}</Typography>}
+                      />
+                    </ListItem>
                   );
                 })}
-              </Stack>
+                <ListItem
+                  disablePadding
+                  secondaryAction={
+                    <Typography
+                      variant="caption"
+                      color={family.finishedAt ? "primary.main" : "text.secondary"}
+                      sx={{ fontWeight: family.finishedAt ? 700 : 500, fontFamily: "monospace" }}
+                    >
+                      {getEventElapsedLabel(family.finishedAt)}
+                    </Typography>
+                  }
+                >
+                  <ListItemIcon sx={{ minWidth: 30 }}>
+                    {family.finishedAt ? (
+                      <CheckCircleIcon color="primary" fontSize="small" />
+                    ) : (
+                      <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Typography variant="body2">Finish</Typography>}
+                  />
+                </ListItem>
+              </List>
             </CardContent>
           </Card>
         ))}
