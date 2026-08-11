@@ -90,9 +90,9 @@ itself (`stations.ts`) and the generic avatar set (`avatars.ts`).
 | `/station/[stationId]` | Clue QR lands here. `stationId` is one of `'1'`–`'7'` (main clues `1`–`5`, extra-secret clues `6`–`7`) — pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. Shows a simple "found it" confirmation with a button; tapping writes `catches/{id}` with just a timestamp. Idempotent — if already found, shows "Already found!" instead of a button, no re-roll (there's nothing to re-roll). |
 | `/collection` | This family's found-so-far list across all 7 clues, with separate main (X/5) and extra-secret (Y/2) counts — no story/word language, since there's no story anymore. |
 | `/map` | Shows `course-map.png` as-is — no pins, no overlays, no per-clue positioning. Tapping it opens the raw image in a new tab so the phone's native image viewer handles pinch-zoom. |
-| `/compare` | Shared view of all families and which of the 7 clues they've found — main-clue completion, extra-secret finds, cross-family comparison. |
-| `/finish` | Finish QR lands here. If `/families/{uid}` doesn't exist, redirect to `/start?returnTo=/finish` same as any clue. Idempotent — first scan sets `finishedAt` and shows the welcome-to-the-gang screen (X/5 main + Y/2 secret found); re-scanning just re-shows the same welcome screen. Grants no new find — it's a "you're in" celebration, not another catch. |
-| `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + which clues found, manual toggle-a-clue-found/unfound, manually mark a family as finished, and rendered QR codes for the start URL + all 7 clues + finish. |
+| `/compare` | Shared view of all families and which of the 7 clues they've found — main-clue completion, extra-secret finds, cross-family comparison, and each family's finish time (elapsed from clock `startedAt` to their `finishedAt`), sorted fastest-first. See Finish-Time Comparison below. |
+| `/finish` | Finish QR lands here. If `/families/{uid}` doesn't exist, redirect to `/start?returnTo=/finish` same as any clue. Idempotent — first scan sets `finishedAt` and shows the welcome-to-the-gang screen (X/5 main + Y/2 secret found, secret count omitted entirely if zero — see Extra-Secret Clue Secrecy below); re-scanning just re-shows the same welcome screen. Grants no new find — it's a "you're in" celebration, not another catch. Also shows the family's own elapsed finish time. |
+| `/admin` | Organizer-only. Unlisted URL only, no passcode (see Security). Clock start/stop/reset, live table of every family + which clues found, manual toggle-a-clue-found/unfound, manually mark a family as finished, and rendered QR codes for the start URL + all 7 clues + finish. |
 
 Mobile-first layout with an MUI `BottomNavigation` (Home / Map / Collection / Compare) for
 family-facing pages; `/admin` is a separate, unlinked layout not reachable from that nav.
@@ -114,6 +114,40 @@ Small hooks wrapping Firebase's `onValue`:
 All plain hooks — no global store, and no custom family-identity context needed since
 the Firebase Auth SDK itself is the source of truth for "who am I on this device."
 
+## Finish-Time Comparison
+Both `caughtAt` (per clue) and `finishedAt` were already timestamped in the data model
+— "marking the time" needed no data-model change, just surfacing what was already
+recorded:
+- `src/lib/finishTime.ts` exports `getFinishTimeMs(family, clock)`, returning
+  `family.finishedAt - clock.startedAt` in ms, or `null` if either is missing **or the
+  result would be negative**. Negative happens when a family's `finishedAt` predates the
+  *current* clock epoch — e.g. the admin reset/restarted the clock after that family had
+  already finished — and would otherwise render a nonsensical result like `-8:-42`.
+  Treating it as `null` (same as "hasn't finished") sidesteps that instead of trying to
+  reconcile stale finish times against a new clock epoch.
+- `src/lib/formatElapsed.ts` (`M:SS` string) is shared by `/`, `/finish`, and `/compare`
+  — previously duplicated inline on the home page only.
+- `/finish` shows the family's own time via this helper.
+- `/compare` adds a `Time` column and sorts rows by `getFinishTimeMs` ascending (fastest
+  first); families with `null` (unfinished, or invalid per above) sort to the bottom
+  with `—` shown instead of a time.
+- This is bragging-rights comparison, not official race timing (per Out of Scope).
+
+## Extra-Secret Clue Secrecy
+Per this revision's redesign, secret clues 6/7 must never be mentioned to a family
+until they've actually found one — no "0/2 extra-secret clues" line, no placeholder
+card revealing a hidden category exists:
+- `/collection` builds its rendered card list as `[...MAIN_STATIONS,
+  ...SECRET_STATIONS.filter(found)]` — an unfound secret clue simply never appears as a
+  card, rather than appearing as a dimmed "?" placeholder (which was the iteration-3
+  behavior before this fix, and did leak that 2 secret clues exist). The summary line
+  ("`{secretFound}/2` extra-secret clues found") is only rendered when `secretFound > 0`.
+- `/` (home) and `/finish` apply the same `secretFound > 0` gate to their secret-clue
+  summary line/phrase.
+- Once a family finds *one* secret clue, the count and that clue's card start showing —
+  a still-undiscovered second secret clue stays unmentioned even then (the gate is
+  per-family-state, not a one-time reveal-everything trigger).
+
 ## Admin QR Codes
 - `qrcode.react`'s `<QRCode value={url} />` renders real, scannable QR codes directly in
   `/admin` — one for `/start`, one per clue (`/station/1` through `/station/7`), and one
@@ -133,9 +167,12 @@ intentionally minimal — optimize for "ships and works," not for resisting tamp
 - **RTDB rules are fully open** (`.read: true`, `.write: true`) for the week of the
   event. No per-uid write scoping, no special-cased admin uid. This sidesteps the
   fragile "hardcode the organizer's anonymous uid into the rules" scheme entirely — the
-  admin device just writes like any other client, gated only by a client-side passcode
-  on the `/admin` route itself (an env var checked in the browser) to deter casual
-  stumbling-in.
+  admin device just writes like any other client.
+- **`/admin` has no passcode** — an earlier client-side passcode gate (an env var
+  checked in the browser) was removed as unnecessary friction on top of an already-
+  unlisted URL. It never was real security (a passcode baked into the client bundle
+  isn't one) — it only deterred casual stumbling-in, which the unlisted URL alone
+  already does at this scale.
 - **Accepted risk**: anyone could open devtools and write anything — fake a find, mess
   with the clock, forge another family's record. Given the audience (family) and the
   one-day lifespan of the data, this is accepted outright rather than engineered around.
@@ -233,7 +270,7 @@ src/
     compare/page.tsx
     finish/page.tsx                # finish QR lands here — welcome-to-the-gang screen, sets finishedAt
     admin/
-      page.tsx                    # passcode gate
+      page.tsx                    # no gate — just renders AdminDashboard directly
       AdminDashboard.tsx           # clock controls, live family table, manual find/finish toggles
       AdminQrCodes.tsx             # qrcode.react grid for start + 7 clue URLs + finish
     BackToHomeLink.tsx             # small nav-escape-hatch link, used on start/station/finish
@@ -244,6 +281,8 @@ src/
     avatars.ts                    # generic avatar set
   lib/
     firebase.ts                   # Firebase app/RTDB/Auth init
+    finishTime.ts                 # getFinishTimeMs() — shared, negative-time-safe
+    formatElapsed.ts               # shared M:SS formatter (/, /finish, /compare)
     hooks/
       useAuthUid.ts
       useRaceClock.ts
@@ -269,3 +308,8 @@ database.rules.json                 # optional, for version-controlling the open
   mark-as-finished control.
 - **Station ids**: plain numeric strings `'1'`–`'7'` — no thematic naming (no horse
   names, no letter prefixes) per the simplify-the-theme decision.
+- **Admin passcode**: removed. An unlisted URL is the only access control for `/admin`
+  now — judged sufficient at this scale, and the passcode was overkill on top of it.
+- **Finish-time comparison**: surfaced via `getFinishTimeMs()` on `/finish` and
+  `/compare`, using timestamps (`caughtAt`, `finishedAt`) that were already being
+  recorded — no data-model change needed, just display.

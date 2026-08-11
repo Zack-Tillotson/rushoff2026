@@ -103,9 +103,17 @@ Kids do the physical finding; parents do the scanning/tapping.
 - **Progress display is simple counts, not a point score**: "5/5 main clues found" and
   "2/2 extra-secret clues found," shown separately. No numeric scoring math anywhere in
   the app — keeping this simple was the whole point of the redesign.
+- **Extra-secret clues stay genuinely secret until found**: a family that hasn't found
+  either secret clue sees no mention of them anywhere — no "0/2 extra-secret clues"
+  line, no placeholder card hinting at their existence — on the collection screen, the
+  home screen, or the finish welcome. As soon as a family finds one, that specific find
+  (and the running secret-clue count) starts showing; a still-undiscovered second secret
+  clue remains unmentioned even then. The point is to never spoil that there's a hidden
+  bonus category before a family stumbles onto it themselves.
 - Comparison view after the race: given the small group, a simple shared view/table of
-  who found what — main-clue completion, extra-secret finds, cross-family comparison —
-  is enough; no need for a heavyweight leaderboard system.
+  who found what — main-clue completion, extra-secret finds, cross-family comparison,
+  and each family's finish time (see Race clock below) — is enough; no need for a
+  heavyweight leaderboard system.
 
 ### Map
 - Shows the course map image **as-is, with no pins or overlays** — no per-clue
@@ -142,11 +150,19 @@ Kids do the physical finding; parents do the scanning/tapping.
   starts the clock, every family's home page shows the live elapsed time, the same for
   everyone. Used purely for in-app tension, not as official race timing.
 - Controlled via the admin view (start/stop/reset) — see below.
+- **Every clue find and the finish are timestamped**, and the finish timestamp is
+  surfaced for comparison: a family sees their own elapsed "your time" on the finish
+  welcome screen, and the comparison view shows every family's finish time, sorted
+  fastest-first (families who haven't finished yet, or whose recorded finish predates
+  the current clock start — e.g. after an admin clock reset — sort to the bottom with
+  no time shown, rather than a nonsensical result). This is bragging-rights comparison,
+  not official race timing.
 
 ### Admin view
 - A separate, organizer-only view of the site, not exposed to families as a normal part
-  of the flow (simplest protection at this scale: an unlisted URL and/or a basic
-  passcode — full user auth is not warranted for ~8 groups).
+  of the flow. No passcode — an unlisted URL is the only protection, which is enough at
+  this scale (full user auth was already considered unwarranted for ~8 groups; a
+  passcode on top of an unlisted URL turned out to be more friction than it was worth).
 - Capabilities:
   - **Start / stop / reset** the shared race clock.
   - **Live view of all families/teams** and which of the 7 clues each has found so far,
@@ -200,8 +216,9 @@ Kids do the physical finding; parents do the scanning/tapping.
   the physical clues is unassisted.
 - Typing a team name as the *trigger* to start (the start QR scan is the trigger; name
   entry happens right after, as onboarding, not as the identification mechanic itself).
-- Full user authentication/accounts for admin access — an unlisted URL/passcode is
-  sufficient at this scale.
+- Full user authentication/accounts for admin access, and (as of this revision) any
+  passcode either — an unlisted URL alone is sufficient at this scale, and a passcode
+  was judged to add friction without meaningfully improving security here.
 - Offline support / local caching of found-clue state.
 - Any protection against data tampering — the shared database is open for read/write to
   anyone using the app for the week of the event (no per-family write locks, no schema

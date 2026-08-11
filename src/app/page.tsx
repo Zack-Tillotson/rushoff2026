@@ -9,15 +9,9 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useFamily } from "@/lib/hooks/useFamily";
 import { useRaceClock, useElapsedMs } from "@/lib/hooks/useRaceClock";
+import { formatElapsed } from "@/lib/formatElapsed";
 import { MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
 import { getAvatar } from "@/data/avatars";
-
-function formatElapsed(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
 
 export default function HomePage() {
   const router = useRouter();
@@ -76,9 +70,11 @@ export default function HomePage() {
             <Typography variant="body1" sx={{ mt: 1 }}>
               {mainFound}/{MAIN_STATIONS.length} clues found
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {secretFound}/{SECRET_STATIONS.length} extra-secret clues found
-            </Typography>
+            {secretFound > 0 && (
+              <Typography variant="body2" color="text.secondary">
+                {secretFound}/{SECRET_STATIONS.length} extra-secret clues found
+              </Typography>
+            )}
             {mainFound < MAIN_STATIONS.length && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 It&apos;s a there-and-back course — keep an eye out on your way back

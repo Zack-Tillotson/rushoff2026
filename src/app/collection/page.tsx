@@ -10,7 +10,7 @@ import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useFamily } from "@/lib/hooks/useFamily";
-import { STATIONS, MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
+import { MAIN_STATIONS, SECRET_STATIONS } from "@/data/stations";
 import { CLUE_COLORS } from "@/theme";
 
 // Simple found-so-far list — no story/word language, since there's no story anymore.
@@ -30,9 +30,12 @@ export default function CollectionPage() {
     );
   }
 
+  const foundSecretStations = SECRET_STATIONS.filter((s) => family.catches?.[s.id]);
   const mainFound = MAIN_STATIONS.filter((s) => family.catches?.[s.id]).length;
-  const secretFound = SECRET_STATIONS.filter((s) => family.catches?.[s.id]).length;
+  const secretFound = foundSecretStations.length;
   const allMainFound = mainFound === MAIN_STATIONS.length;
+  // Unfound secret clues are never shown — no placeholder card revealing they exist.
+  const visibleStations = [...MAIN_STATIONS, ...foundSecretStations];
 
   return (
     <Box sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
@@ -40,8 +43,10 @@ export default function CollectionPage() {
         Your Clues
       </Typography>
       <Typography variant="body1" sx={{ mb: 1 }}>
-        {mainFound}/{MAIN_STATIONS.length} clues found &mdash; {secretFound}/
-        {SECRET_STATIONS.length} extra-secret clues found.
+        {mainFound}/{MAIN_STATIONS.length} clues found
+        {secretFound > 0 &&
+          ` — ${secretFound}/${SECRET_STATIONS.length} extra-secret clues found`}
+        .
       </Typography>
       <Typography variant="body1" sx={{ mb: 1 }}>
         {allMainFound
@@ -57,7 +62,7 @@ export default function CollectionPage() {
       )}
 
       <Grid container spacing={2}>
-        {STATIONS.map((station) => {
+        {visibleStations.map((station) => {
           const found = Boolean(family.catches?.[station.id]);
           const accentColor = station.kind === "main" ? CLUE_COLORS.main : CLUE_COLORS.secret;
           const label = station.kind === "main" ? `Clue #${station.id}` : "Secret Clue";

@@ -24,13 +24,22 @@ real Firebase backend. What remains is genuinely physical/deployment work, not c
 - [x] Fixed ambiguous "Secret"/"Secret" column headers in admin + compare tables (now
       "Secret #6"/"Secret #7")
 
+## 0b. Post-iteration-3 refinements (done)
+- [x] Removed the `/admin` passcode gate entirely — unlisted URL only now. Deleted
+      `NEXT_PUBLIC_ADMIN_PASSCODE` from `.env.local`.
+- [x] Finish-time comparison: `src/lib/finishTime.ts` (`getFinishTimeMs`, guards
+      against negative time from a stale finish predating a clock reset) + shared
+      `src/lib/formatElapsed.ts`. `/finish` shows the family's own time; `/compare`
+      adds a sorted `Time` column.
+- [x] Extra-secret clues (6/7) are now genuinely hidden until found — no "0/2
+      extra-secret" mention or placeholder card on `/`, `/collection`, or `/finish`
+      until a family has found at least one.
+
 ## 1. Foundation (unchanged from iteration 2, still valid)
 - [x] Next.js + MUI scaffold, static export config
 - [x] `src/lib/firebase.ts` (lazy `getDb()`/`getAuthInstance()`)
 - [x] Firebase Realtime Database + Anonymous Auth confirmed working (live e2e run)
 - [x] `.env.local`: `NEXT_PUBLIC_FIREBASE_DATABASE_URL` confirmed working
-- [ ] `.env.local`: `NEXT_PUBLIC_ADMIN_PASSCODE` is still `till` — confirm that's really
-      what you want live on race day, or change it before deploying
 - [x] `qrcode.react` dependency installed
 
 ## 2. End-to-end verification (done)
