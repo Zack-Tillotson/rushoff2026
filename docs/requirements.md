@@ -107,16 +107,12 @@ Kids do the physical finding; parents do the scanning/tapping.
   who found what — main-clue completion, extra-secret finds, cross-family comparison —
   is enough; no need for a heavyweight leaderboard system.
 
-### Map & wayfinding (hint mechanism)
-- A **static course-image placeholder** for now — you supply the real map image
-  directly (no dynamic map library, no GPS, no live location). Icons for the 5 main
-  clues are positioned on the image; the 2 extra-secret clues show only a general
-  **area** (not an exact icon) — this is the "hint": enough to guide a determined
-  family without giving away the exact spot.
-- This map view serves as the hint mechanism; no separate stuck-detection/timer-based hint
-  trigger is needed on top of it.
-- No GPS coordinates needed for clues — placement is just positioning icons on
-  whatever image you supply.
+### Map
+- Shows the course map image **as-is, with no pins or overlays** — no per-clue
+  positioning, no dynamic map library, no GPS, no live location. Tapping the map opens
+  it full-size so participants can pinch-zoom using their phone's native image viewer.
+  This replaces the earlier plan to mark clue locations on the map; the map is now
+  purely "here's the course," not a hint mechanism.
 - **There-and-back course**: the actual race route goes out and back along the same
   path, so every family passes every clue location twice. Rather than changing clue
   placement to avoid this, the app nudges families with copy — home, collection, and
@@ -199,7 +195,9 @@ Kids do the physical finding; parents do the scanning/tapping.
 - GPS/location of any kind. No live position, no race timing/results via GPS, no
   replacing any existing race-day tooling. The race clock here is just for in-app
   tension, not official timing.
-- Stuck-detection or explicit "give me a hint" interaction — the map covers this.
+- Stuck-detection, explicit "give me a hint" interaction, or any per-clue hint/wayfinding
+  mechanism — the map is just a plain course reference now, not a hint system. Finding
+  the physical clues is unassisted.
 - Typing a team name as the *trigger* to start (the start QR scan is the trigger; name
   entry happens right after, as onboarding, not as the identification mechanic itself).
 - Full user authentication/accounts for admin access — an unlisted URL/passcode is
@@ -217,9 +215,8 @@ Kids do the physical finding; parents do the scanning/tapping.
   approach, dropped for being confusing. A found clue is just found.
 
 ## Pre-Race Checklist
-- Walk the course and verify cell signal at every planned clue location (no GPS
-  coordinates needed — map placement is just icon positioning on whatever static
-  image is supplied).
+- Walk the course and verify cell signal at every planned clue location (the map is
+  just a plain reference image now — no per-clue placement/coordinates to decide).
 - Do a full end-to-end dry run (start scan → find each clue → finish scan) on at
   least one iPhone and one Android device before race day, using the admin view's QR
   codes to test without needing to physically visit the course.

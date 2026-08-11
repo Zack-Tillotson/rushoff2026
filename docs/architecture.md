@@ -57,11 +57,11 @@ the found state.
 gives each family an unofficial "your time was X:XX" moment at the welcome screen —
 just for fun tension, not official timing (per Out of Scope).
 
-Everything else — the list of clue ids (`'1'`–`'7'`), which are "main" vs. "extra-secret",
-and their position on the static map image (percentage x/y or area radius) — is
-**static config shipped with the app** (`src/data/stations.ts`), not stored in the
-database. It never changes at runtime, so there's no reason to pay for a DB round-trip
-to read it.
+Everything else — the list of clue ids (`'1'`–`'7'`) and which are "main" vs.
+"extra-secret" — is **static config shipped with the app** (`src/data/stations.ts`),
+not stored in the database. It never changes at runtime, so there's no reason to pay
+for a DB round-trip to read it. (No map-position data anymore — the map page just shows
+the course image as-is, no per-clue coordinates needed; see Pages/Routes below.)
 
 `familyId` **is the Firebase Anonymous Auth UID**, not a separately-generated key. Every
 device signs in anonymously on first load (`signInAnonymously()`); Firebase persists that
@@ -89,7 +89,7 @@ itself (`stations.ts`) and the generic avatar set (`avatars.ts`).
 | `/start` | Start QR lands here. Signs in anonymously if not already, then checks `/families/{uid}`: if it exists, redirect straight to `/`; if not, show the name+avatar form and create the record at that uid. |
 | `/station/[stationId]` | Clue QR lands here. `stationId` is one of `'1'`–`'7'` (main clues `1`–`5`, extra-secret clues `6`–`7`) — pre-rendered via `generateStaticParams` (required for the static export). If `/families/{uid}` doesn't exist yet, redirect to `/start?returnTo=/station/[id]`. Shows a simple "found it" confirmation with a button; tapping writes `catches/{id}` with just a timestamp. Idempotent — if already found, shows "Already found!" instead of a button, no re-roll (there's nothing to re-roll). |
 | `/collection` | This family's found-so-far list across all 7 clues, with separate main (X/5) and extra-secret (Y/2) counts — no story/word language, since there's no story anymore. |
-| `/map` | Static course-image placeholder (organizer-supplied image) with icons for the 5 main clues positioned by percentage x/y, and a general area (not an exact icon) for the 2 extra-secret clues. No GPS, no live location. |
+| `/map` | Shows `course-map.png` as-is — no pins, no overlays, no per-clue positioning. Tapping it opens the raw image in a new tab so the phone's native image viewer handles pinch-zoom. |
 | `/compare` | Shared view of all families and which of the 7 clues they've found — main-clue completion, extra-secret finds, cross-family comparison. |
 | `/finish` | Finish QR lands here. If `/families/{uid}` doesn't exist, redirect to `/start?returnTo=/finish` same as any clue. Idempotent — first scan sets `finishedAt` and shows the welcome-to-the-gang screen (X/5 main + Y/2 secret found); re-scanning just re-shows the same welcome screen. Grants no new find — it's a "you're in" celebration, not another catch. |
 | `/admin` | Organizer-only. Passcode-gated (see Security). Clock start/stop/reset, live table of every family + which clues found, manual toggle-a-clue-found/unfound, manually mark a family as finished, and rendered QR codes for the start URL + all 7 clues + finish. |
@@ -229,7 +229,7 @@ src/
     start/page.tsx
     station/[stationId]/page.tsx
     collection/page.tsx
-    map/page.tsx                  # static placeholder image + positioned icons, no map library
+    map/page.tsx                  # course-map.png shown as-is, tap to open full-size for native zoom
     compare/page.tsx
     finish/page.tsx                # finish QR lands here — welcome-to-the-gang screen, sets finishedAt
     admin/
@@ -240,7 +240,7 @@ src/
     WantedPosterCard.tsx           # shared parchment/rope reveal-card component
     layout.tsx                    # MUI ThemeProvider, CssBaseline, BottomNavigation
   data/
-    stations.ts                   # 7 clues: id ('1'-'7'), kind ('main'|'secret'), x/y % or area radius
+    stations.ts                   # 7 clues: id ('1'-'7'), kind ('main'|'secret') — no map-position data
     avatars.ts                    # generic avatar set
   lib/
     firebase.ts                   # Firebase app/RTDB/Auth init
@@ -254,7 +254,8 @@ database.rules.json                 # optional, for version-controlling the open
 ```
 
 ## Resolved
-- **Map**: static placeholder image with positioned icons, no map library, no GPS.
+- **Map**: the course image shown as-is, no pins/overlays, no map library, no GPS —
+  tap-to-open-fullsize for native pinch-zoom instead of building custom zoom/pan.
 - **Reveal animation**: plain CSS/MUI transitions only. No animation library.
 - **QR codes**: rendered in-app via `qrcode.react` (admin view), not a manual external
   tool.

@@ -18,6 +18,9 @@ real Firebase backend. What remains is genuinely physical/deployment work, not c
 - [x] `collection`/`map`/`compare`/`admin` — all updated for the simplified model
 - [x] Home page — hides the race clock until the organizer starts it, then shows live
       elapsed time (per this iteration's specific ask)
+- [x] `/map` — simplified further: shows `course-map.png` as-is with no pins/overlays;
+      tap-to-open-fullsize for native pinch-zoom. Removed the now-unused `map: {x,y}`
+      field from `stations.ts` entirely (dead code once pins were dropped).
 - [x] Fixed ambiguous "Secret"/"Secret" column headers in admin + compare tables (now
       "Secret #6"/"Secret #7")
 
@@ -54,8 +57,8 @@ hardware path.
 
 ## 4. Physical Prep — still open
 - [ ] Decide exact physical placement for all 5 main clues + 2 secret clues along the
-      real course, and update `stations.ts` map percentages accordingly (currently
-      placeholder guesses made by eyeballing `course-map.png`)
+      real course (the map no longer needs coordinates — it's a plain reference image
+      now, so this is purely a physical decision, nothing to update in code)
 - [ ] Decide exact finish QR placement — must not interfere with the real race
       finish-line flow/congestion
 - [ ] Generate the 9 QR codes from the admin view once deployed; print/laminate
