@@ -7,13 +7,9 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
-import Table from "@mui/material/Table";
-import TableHead from "@mui/material/TableHead";
-import TableBody from "@mui/material/TableBody";
-import TableRow from "@mui/material/TableRow";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import Paper from "@mui/material/Paper";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import InputLabel from "@mui/material/InputLabel";
@@ -97,39 +93,43 @@ export default function AdminDashboard() {
       <Typography variant="h6" gutterBottom>
         Families ({families.length})
       </Typography>
-      <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Family</TableCell>
-              {STATIONS.map((s) => (
-                <TableCell key={s.id} align="center">
-                  {s.kind === "main" ? `#${s.id}` : `Secret #${s.id}`}
-                </TableCell>
-              ))}
-              <TableCell align="center">Finished</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {families.map((family) => (
-              <TableRow key={family.id}>
-                <TableCell>
+      <Stack spacing={2} sx={{ mb: 2 }}>
+        {families.map((family) => (
+          <Card key={family.id} variant="outlined">
+            <CardContent>
+              <Stack
+                direction="row"
+                sx={{ mb: 1.5, justifyContent: "space-between", alignItems: "center" }}
+              >
+                <Typography variant="h6">
                   {getAvatar(family.avatarId)?.emoji} {family.name}
-                </TableCell>
+                </Typography>
+                <Chip
+                  size="small"
+                  label={family.finishedAt ? "Finished" : "Racing"}
+                  color={family.finishedAt ? "success" : "default"}
+                  variant={family.finishedAt ? "filled" : "outlined"}
+                />
+              </Stack>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
                 {STATIONS.map((s) => {
                   const caught = family.catches?.[s.id];
+                  const label = s.kind === "main" ? `#${s.id}` : `Secret #${s.id}`;
                   return (
-                    <TableCell key={s.id} align="center">
-                      {caught ? (caught.manual ? "✅*" : "✅") : "—"}
-                    </TableCell>
+                    <Chip
+                      key={s.id}
+                      size="small"
+                      label={caught ? (caught.manual ? `${label} ✓*` : `${label} ✓`) : label}
+                      color={caught ? "primary" : "default"}
+                      variant={caught ? "filled" : "outlined"}
+                    />
                   );
                 })}
-                <TableCell align="center">{family.finishedAt ? "✅" : "—"}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
       <Typography variant="caption" color="text.secondary">
         * = manually added/corrected
       </Typography>
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
       <Typography variant="h6" gutterBottom>
         Manually Mark a Clue Found/Unfound
       </Typography>
-      <Stack spacing={2} sx={{ maxWidth: 360, mb: 4 }}>
+      <Stack spacing={2} sx={{ maxWidth: 480, mb: 4 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Family</InputLabel>
           <Select

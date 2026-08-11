@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 import { QRCodeSVG } from "qrcode.react";
 import { STATIONS } from "@/data/stations";
@@ -11,7 +11,9 @@ import { STATIONS } from "@/data/stations";
 // Renders real, scannable QR codes for every route — start, all 7 stations, and
 // finish (9 total) — so the organizer can test (or hand their phone to someone else to
 // scan) without needing the printed physical clues on hand. Also doubles as the
-// source for the physical printed clues themselves.
+// source for the physical printed clues themselves. Single column, stacked — this is
+// a phone-first admin tool, and a multi-column grid of QR codes is fiddly to scan
+// through on a narrow screen.
 export default function AdminQrCodes() {
   const [origin, setOrigin] = useState("");
 
@@ -35,21 +37,28 @@ export default function AdminQrCodes() {
       <Typography variant="h6" gutterBottom>
         QR Codes ({routes.length})
       </Typography>
-      <Grid container spacing={2}>
+      <Stack spacing={2}>
         {routes.map((route) => (
-          <Grid key={route.path} size={{ xs: 6, sm: 4, md: 3 }}>
-            <Paper variant="outlined" sx={{ p: 2, textAlign: "center" }}>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                {route.label}
-              </Typography>
-              <QRCodeSVG value={`${origin}${route.path}`} size={128} />
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+          <Paper
+            key={route.path}
+            variant="outlined"
+            sx={{
+              p: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <QRCodeSVG value={`${origin}${route.path}`} size={96} />
+            <Box>
+              <Typography variant="subtitle1">{route.label}</Typography>
+              <Typography variant="body2" color="text.secondary">
                 {route.path}
               </Typography>
-            </Paper>
-          </Grid>
+            </Box>
+          </Paper>
         ))}
-      </Grid>
+      </Stack>
     </Box>
   );
 }

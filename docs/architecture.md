@@ -157,6 +157,20 @@ card revealing a hidden category exists:
   straight from this admin view instead of using an external QR-generator site.
 - Purely client-side rendering (SVG/canvas), no network dependency beyond the page
   itself already having loaded.
+- **Single column, stacked** — `/admin` is a phone-first tool, and a multi-column grid
+  of QR codes is fiddly to scan through on a narrow screen. Each row is a `Paper` with
+  the code beside its label/path, not a grid cell.
+
+## Admin Family List
+`/admin`'s family list is a **stack of cards, one per family** — not a table. A
+horizontal table with a column per clue (7 clues + name + finished = 9 columns) doesn't
+fit a phone screen without horizontal scrolling, which is exactly the failure mode this
+avoids. Each card has the family's name/avatar and a Finished/Racing chip up top, then a
+wrapped row of `Chip`s — one per clue, filled+colored if found (with a trailing `*` if
+manually corrected) or outlined if not — so the full 7-clue status is always visible at
+a glance with no scrolling in either direction, at the cost of being less scannable as
+a grid than a table would be for comparing many families side-by-side (an acceptable
+tradeoff at ~8 families).
 
 ## Security
 Given the scale (~8 groups, private family event, one afternoon), security is
@@ -245,8 +259,9 @@ component (unchanged from iteration 2) rather than hand-styling each page.
 
 ### Key MUI components
 `AppBar`, `BottomNavigation`, `Card` (finish welcome, themed per above), `Avatar`
-(family avatar, rope-framed), `LinearProgress` (main-clue completion), `Table`/
-`DataGrid`-lite (admin + compare), `Snackbar` (toasts, e.g. "clue marked found").
+(family avatar, rope-framed), `LinearProgress` (main-clue completion), `Chip` (admin
+family-list clue status, per Admin Family List above), `Table` (compare view only —
+admin uses cards, not a table; see above), `Snackbar` (toasts, e.g. "clue marked found").
 
 ## Deployment
 - `next build` (with `output: 'export'` in `next.config`) produces a static `out/`
@@ -271,8 +286,8 @@ src/
     finish/page.tsx                # finish QR lands here — welcome-to-the-gang screen, sets finishedAt
     admin/
       page.tsx                    # no gate — just renders AdminDashboard directly
-      AdminDashboard.tsx           # clock controls, live family table, manual find/finish toggles
-      AdminQrCodes.tsx             # qrcode.react grid for start + 7 clue URLs + finish
+      AdminDashboard.tsx           # clock controls, per-family cards (not a table), manual find/finish toggles
+      AdminQrCodes.tsx             # qrcode.react, single column, for start + 7 clue URLs + finish
     BackToHomeLink.tsx             # small nav-escape-hatch link, used on start/station/finish
     WantedPosterCard.tsx           # shared parchment/rope reveal-card component
     layout.tsx                    # MUI ThemeProvider, CssBaseline, BottomNavigation
@@ -313,3 +328,7 @@ database.rules.json                 # optional, for version-controlling the open
 - **Finish-time comparison**: surfaced via `getFinishTimeMs()` on `/finish` and
   `/compare`, using timestamps (`caughtAt`, `finishedAt`) that were already being
   recorded — no data-model change needed, just display.
+- **Admin mobile UX**: QR grid is single-column/stacked, and the family list is cards
+  (one per family, wrapped clue chips) instead of a 9-column table — both driven by
+  `/admin` being used on the organizer's phone in the field, where a wide grid or table
+  would force horizontal scrolling.
